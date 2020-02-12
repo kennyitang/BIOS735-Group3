@@ -1,6 +1,8 @@
 # need a function wrapper around the whole code chunk below
 
-# from user input function: X & beta dimension P, y, link variable, maxit?, other things?
+# from user input function: X & beta dimension P, y, link variable, maxit?, other things? 
+        # option to print iteration history? 
+        # by link do you mean family/distribution?
 # need checks on data dimensions and range
 X
 P 
@@ -12,7 +14,7 @@ maxit = 50
 iter = 0
 eps = 10^10
 
-if (link == "logit"){
+if (tolower(link) == "logit"){
   
   log.lik = function(pi, y){
     
@@ -54,7 +56,7 @@ if (link == "logit"){
   }
   
   
-} else if (link == "pois" ){
+} else if (tolower(link) == "pois" ){
   
   log.lik = function(lambda, y){
     update = sum(dpois(y, lambda = lambda, log = T))
