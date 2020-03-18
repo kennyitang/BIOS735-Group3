@@ -1,0 +1,40 @@
+---
+title: "BIOS 735 Project Proposal"
+author: "Group 3 - *Group Name* - *Marissa Ashner, Yen Chang, Marco Chen, Weifang Liu, Yi Tang, Joyce Yan*"
+date: "3/18/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Dataset
+
+-Reference for Dataset
+
+https://archive.ics.uci.edu/ml/datasets/Travel+Reviews
+
+https://archive.ics.uci.edu/ml/datasets/Hepatitis+C+Virus+%28HCV%29+for+Egyptian+patients
+
+https://archive.ics.uci.edu/ml/datasets/Chronic_Kidney_Disease
+
+https://archive.ics.uci.edu/ml/datasets/Breast+Tissue
+
+-Description of Data
+
+## Question
+
+-What question do we want to answer?
+
+## Model 
+
+-How do we plan on answering this question? What model(s) can we use?
+
+### Usage of Module 2
+
+-i.e. optimization, EM, Integration, MCMC
+
+### Usage of Module 3
+
+-Machine Learning (SVM, RF, NN)
