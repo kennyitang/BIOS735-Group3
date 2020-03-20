@@ -21,6 +21,12 @@ https://archive.ics.uci.edu/ml/datasets/Chronic_Kidney_Disease
 
 https://archive.ics.uci.edu/ml/datasets/Breast+Tissue
 
+http://archive.ics.uci.edu/ml/datasets/vertebral+column Vertebral Column Data Set/Biomechanical features of orthopedic patients
+
+https://www.kaggle.com/nycopendata/high-schools Average SAT Scores for NYC Public Schools
+
+https://www.kaggle.com/san-francisco/sf-restaurant-scores-lives-standard SF Restaurant Scores - Health Inspection
+
 -Description of Data
 
 ## Question
@@ -30,6 +36,8 @@ https://archive.ics.uci.edu/ml/datasets/Breast+Tissue
 ## Model 
 
 -How do we plan on answering this question? What model(s) can we use?
+
+Something related to our research? e.g., lasso-penalized logistic regression
 
 ### Usage of Module 2
 
