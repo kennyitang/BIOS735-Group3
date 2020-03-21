@@ -27,6 +27,12 @@ https://www.kaggle.com/nycopendata/high-schools Average SAT Scores for NYC Publi
 
 https://www.kaggle.com/san-francisco/sf-restaurant-scores-lives-standard SF Restaurant Scores - Health Inspection
 
+https://www.kaggle.com/shivam2503/diamonds - Prices and other attributes of almost 54,000 diamonds
+
+https://www.kaggle.com/loveall/cervical-cancer-risk-classification - Cervical cancer risk factors for biopsy
+
+https://archive.ics.uci.edu/ml/datasets/PM2.5+Data+of+Five+Chinese+Cities - PM2.5 and meteorological data for 5 cities in China
+
 -Description of Data
 
 ## Question
