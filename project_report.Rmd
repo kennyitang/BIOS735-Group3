@@ -10,9 +10,14 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
 ```
 
 # Introduction 
+
+Sitting in traffic is not ideal for anyone, and it is especially frustrating when the traffic is caused by an accident. It is an unexpected delay, and many times it is completely uncertain how long the delay will last. Traffic accident data can be an invaluble resource, as it can provide information that can potentially aid in predicting conditions where accidents are prone to happen so steps can be taken to prevent the accident. Further, this data could be useful in predicting how severely an accident will delay the following drivers after the accident happens so steps can be taken to reduce this delay as needed. 
+
+Several computer scientists from the Ohio State University present exactly this: a dataset of traffic accidents from the contiguous United States, covering 2.25 accidents between February 2016 and December 2019. As of March 2019, of the 49 states included, North Carolina had the fourth highest number of accidents in the dataset at 109,000 [1]. Because of the wide range of attributes collected with each accident in the dataset, this has the potential to provide the information needed to start making decisions about how to prevent accidents and the delays associated.
 
 # Project Aim 
 
@@ -28,8 +33,20 @@ Our R package `name` contains ...
 
 # Data
 
+The dataset used contains 142,460 traffic accidents from North Carolina between the years 2016 and 2019. The original dataset had 49 total attributes, including attributes related to traffic, location, weather, points of interest, and period of day. For our purposes, we removed all location attributes. We also chose to remove Wind Chill and Precipitation since they had around 60% missingess.
+
 ```{r}
 data <- read.csv("NC_Accidents.csv")
+data_filtered <- data %>% select(ID, Severity, Start_Time, End_Time, Distance.mi., 
+                                 Side, Temperature.F., Humidity..., Pressure.in.,
+                                 Visibility.mi., Wind_Direction, Wind_Speed.mph., 
+                                 Weather_Condition, Amenity, Bump, Crossing, Give_Way, 
+                                 Junction, 
+                                 No_Exit, Railway, Roundabout, Station, Stop, 
+                                 Traffic_Calming, Traffic_Signal, Turning_Loop,
+                                 Sunrise_Sunset) %>% 
+  mutate(Month = (Start_Time %>% as.POSIXlt())$mon + 1, Hour =  (Start_Time %>% as.POSIXlt())$hour) %>% 
+  select(-Start_Time)
 ```
 
 Variables: 
@@ -37,13 +54,13 @@ Variables:
 2. Source (API that reported accident) -- remove
 3. TMC -- remove
 4. Severity -- response 
-5. Start Time -- keep the hour and minute of the day?
+5. Start Time -- keep the hour and minute of the day? aggregate?, keep month?
 6. End Time 
 7. Start Lat -- remove 
 8. Start Lng -- remove
 9. End Lat -- remove
 10. End Lng -- remove
-11. Distance (Length of road extent affected by accident)
+11. Distance (Length of road extent affected by accident) -- only 13% is nonzero?
 12. Description (in Natural Language) -- remove for now?
 13. Number (Street) -- remove
 14. Street (Name) -- remove
@@ -57,15 +74,15 @@ Variables:
 22. Airport Code -- remove
 23. Weather Timestamp -- remove
 24. Temperature 
-25. Wind Chill 
+25. Wind Chill  -- remove missingness
 26. Humidity (%)
 27. Pressure (Air, in inches)
-28. Visibility (in miles)
-29. Wind Direction 
+28. Visibility (in miles) 
+29. Wind Direction --- aggregate CALM vs NOT CALM?
 30. Wind Speed (mph) 
-31. Precipitation (in inches)
-32. Weather Condition -- aggregate?
-33. Amenity -- remove
+31. Precipitation (in inches) -- remove missingness
+32. Weather Condition -- aggregate? (53 factors)
+33. Amenity 
 34. Bump (presence of speed bump in nearby location)
 35. Crossing (presence of crossing nearby)
 36. Give_Way (presence of give_way sign nearby)
@@ -78,10 +95,10 @@ Variables:
 43. Traffic_Calming 
 44. Traffic_Signal 
 45. Turning_Loop
-46. Sunrise_Sunset -- pick one of these last four 
-47. Civil_Twilight
-48. Nautical_Twilight
-49. Astronomical_Twilight
+46. Sunrise_Sunset 
+47. Civil_Twilight -- remove
+48. Nautical_Twilight -- remove
+49. Astronomical_Twilight -- remove
 
 
 # Methods 
@@ -102,13 +119,13 @@ Variables:
 
 # Data References 
 
-https://www.kaggle.com/sobhanmoosavi/us-accidents
+Website: https://www.kaggle.com/sobhanmoosavi/us-accidents
 
-Moosavi, Sobhan, Mohammad Hossein Samavatian, Srinivasan Parthasarathy, and Rajiv
-  Ramnath. “A Countrywide Traffic Accident Dataset.”, 2019.
+[1] Moosavi, Sobhan, Mohammad Hossein Samavatian, Srinivasan Parthasarathy, and Rajiv
+      Ramnath. “A Countrywide Traffic Accident Dataset.”, 2019.
   
-Moosavi, Sobhan, Mohammad Hossein Samavatian, Srinivasan Parthasarathy, Radu
-  Teodorescu, and Rajiv Ramnath. "Accident Risk Prediction based on Heterogeneous
-  Sparse Data: New Dataset and Insights." In proceedings of the 27th ACM SIGSPATIAL
-  International Conference on Advances in Geographic Information Systems, ACM, 2019.
+[2] Moosavi, Sobhan, Mohammad Hossein Samavatian, Srinivasan Parthasarathy, Radu
+      Teodorescu, and Rajiv Ramnath. "Accident Risk Prediction based on Heterogeneous
+      Sparse Data: New Dataset and Insights." In proceedings of the 27th ACM SIGSPATIAL
+      International Conference on Advances in Geographic Information Systems, ACM, 2019.
 
