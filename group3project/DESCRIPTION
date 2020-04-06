@@ -26,8 +26,8 @@ Authors@R:
              family = "Yan",
              role = c("aut", "cre"),
              email = "joyceyan@live.unc.edu"))
-Description: What the package does (one paragraph).
-License: What license it uses
+Description: This package is created for analyzing car accidents data in North Carolina. In particular, it contains functions for fitting proportional odds models and applying random forest to identify predictors for severity of car accidents in NC.
+License: GPL-2
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.0.2
