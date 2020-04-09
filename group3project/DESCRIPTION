@@ -1,0 +1,36 @@
+Package: group3project
+Title: R Package for BIOS 735 Group 3 Project
+Version: 0.0.0.9000
+Authors@R: 
+    c(person(given = "Marissa",
+             family = "Ashner",
+             role = "aut",
+             email = "mashner@live.unc.edu"),
+      person(given = "Yen",
+             family = "Chang",
+             role = "aut",
+             email = "yench@live.unc.edu"),
+      person(given = "Marco",
+             family = "Chen",
+             role = "aut",
+             email = "mchen@unc.edu"),
+      person(given = "Yi Tang",
+             family = "Chen",
+             role = "aut",
+             email = "yitang@live.unc.edu"),
+      person(given = "Weifang",
+             family = "Liu",
+             role = "aut",
+             email = "weifangl@live.unc.edu"),
+      person(given = "Joyce",
+             family = "Yan",
+             role = c("aut", "cre"),
+             email = "joyceyan@live.unc.edu"))
+Description: This package is created for analyzing car accidents data in North Carolina. In particular, it contains functions for fitting proportional odds models and applying random forest to identify predictors for severity of car accidents in NC.
+License: GPL-2
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.0.2
+Imports: gtools
+Suggests: 
+    testthat (>= 2.1.0)
