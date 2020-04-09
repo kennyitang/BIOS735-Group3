@@ -46,7 +46,7 @@ data_filtered <- data %>% select(ID, Severity, Start_Time, End_Time, Distance.mi
                                  Traffic_Calming, Traffic_Signal, Turning_Loop,
                                  Sunrise_Sunset) %>% 
   mutate(Month = (Start_Time %>% as.POSIXlt())$mon + 1, Hour =  (Start_Time %>% as.POSIXlt())$hour) %>% 
-  select(-Start_Time)
+  select(-Start_Time, -End_Time)
 ```
 
 Variables: 
