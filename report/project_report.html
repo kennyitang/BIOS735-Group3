@@ -1635,7 +1635,7 @@ summary {
 
 <h1 class="title toc-ignore">BIOS 735 Final Project: Car Accident Severity</h1>
 <h4 class="author">Marissa Ashner, Yen Chang, Marco Chen, Weifang Liu, Yi Tang, Joyce Yan</h4>
-<h4 class="date">4/27/2020</h4>
+<h4 class="date">4/23/2020</h4>
 
 </div>
 
@@ -1644,17 +1644,23 @@ summary {
 <li><a href="#introduction">Introduction</a></li>
 <li><a href="#project-aim">Project Aim</a></li>
 <li><a href="#r-package">R-Package</a></li>
-<li><a href="#data">Data</a></li>
+<li><a href="#data">Data</a><ul>
+<li><a href="#outcome">Outcome:</a></li>
+<li><a href="#predictors">Predictors:</a></li>
+</ul></li>
 <li><a href="#methods">Methods</a><ul>
 <li><a href="#proportional-odds-model">Proportional Odds Model</a></li>
 <li><a href="#random-forest">Random Forest</a></li>
+<li><a href="#evaluation-and-comparison-of-models">Evaluation and Comparison of Models</a></li>
 </ul></li>
 <li><a href="#results">Results</a><ul>
 <li><a href="#proportional-odds-model-1">Proportional Odds Model</a></li>
 <li><a href="#random-forest-1">Random Forest</a></li>
 <li><a href="#method-comparison">Method Comparison</a></li>
 </ul></li>
-<li><a href="#discussion">Discussion</a></li>
+<li><a href="#discussion">Discussion</a><ul>
+<li><a href="#limitations">Limitations</a></li>
+</ul></li>
 <li><a href="#data-references">Data References</a></li>
 </ul>
 </div>
@@ -1670,48 +1676,92 @@ summary {
 </div>
 <div id="r-package" class="section level1">
 <h1>R-Package</h1>
-<p>Our R package <code>group3project</code> contains functions to fit a proportional odds model, random forest….</p>
+<p>Our R package <code>group3project</code> contains the functions needed to fit a proportional odds model and random forest as well as the datasets we used to do so for this report:</p>
+<p>*Note: edit this as needed as we fill in the R package, may not need our own Random Forest functions</p>
+<ul>
+<li><p>Functions for Proportional Odds Model</p></li>
+<li><p>Functions for Random Forest</p></li>
+<li>Datasets
+<ul>
+<li>Testing Data</li>
+<li>Training Data</li>
+<li>Full NC Data</li>
+</ul></li>
+</ul>
 <pre class="r"><code>## load package here </code></pre>
 </div>
 <div id="data" class="section level1">
 <h1>Data</h1>
-<p>The final dataset used contains 119,279 traffic accidents from North Carolina between the years 2016 and 2019. The original dataset had 49 total attributes, including attributes related to traffic, location, weather, points of interest, and period of day. For our purposes, we removed all location attributes.(?? not done yet) We also chose to remove Wind Chill and Precipitation since they had around 60% missingess. Additionally, most of the points of interest variables had very low variability, so we chose only to keep Crossing and Traffic Signal (TRUE/FALSE variables).</p>
-<pre class="r"><code>data_filtered &lt;- read.csv(&quot;../data/NC_Accidents_filtered.csv&quot;)</code></pre>
+<p>The final dataset used contains 119,279 traffic accidents from North Carolina between the years 2016 and 2019. The original dataset had 49 total attributes, including attributes related to traffic, location, weather, points of interest, and period of day. For our purposes, we removed most location attributes (?? not done yet). We also chose to remove Wind Chill and Precipitation since they had around 60% missingess. Additionally, most of the points of interest variables had very low variability across observations, so we chose only to keep Crossing and Traffic Signal.</p>
+<p>In terms of traffic incidents, rows were removed that were missing all weather variables. Additionally, the data were split up into training data (pre-2019) and testing data (2019) as mentioned previously. The final training dataset has 75,887 observations and the testing has 43,392.</p>
+<pre class="r"><code>data_filtered &lt;- read.csv(&quot;../data/NC_Accidents_filtered.csv&quot;)
+data_training &lt;- read.csv(&quot;../data/NC_Accidents_trn.csv&quot;)
+data_testing &lt;- read.csv(&quot;../data/NC_Accidents_tst.csv&quot;)</code></pre>
 <p>Variables:<br />
 (YC: (i) would this be easier to read if we group by their role in the analysis(outcome/predictor candidates/dropped)? (ii)Do we start with the same set subset of variables for both proportional odds model and RF?)</p>
 <p>The Final Selection of Variables is as follows:</p>
-<p><strong>Outcome: </strong> 1. Severity: severity of the accident in terms of the impact on traffic, which is an integer from 1 to 4 with increasing impact. This is an ordinal variable and the outcome of interest.</p>
-<p>(YC: the dataset and paper is rather vague on how severity is defined or derived. Length of delay is the only criterion they explicitly mentioned? I would guess that scope, for example how many lanes affected, is probably taken into account?)</p>
-<p><strong>Predictors: </strong><br />
-1. Source (API that reported accident) – remove<br />
-2. Start Time – start time of the accident. keep the hour and minute of the day? aggregate?, keep month?<br />
-3. End Time<br />
-4. Start Lat – remove 5. Start Lng – remove<br />
-6. Description (in Natural Language) – remove for now?<br />
-7. Number (Street) – remove<br />
-8. Street (Name) – remove<br />
-9. Side (of Street – R/L)<br />
-10. City – remove for now? or aggregate rural/urban? (YC: then we need some way to distinguish between rural/urban)<br />
-11. County – remove for now? or aggregate rural/urban?<br />
-12. State – remove<br />
-13. Zipcode – remove<br />
-14. Country – remove<br />
-15. Timezone – remove<br />
-16. Airport Code – remove<br />
-17. Weather Timestamp – remove<br />
-18. Temperature<br />
-19. Humidity (%)<br />
-20. Pressure (Air, in inches)<br />
-21. Visibility (in miles)<br />
-22. Wind Direction — aggregate CALM vs NOT CALM?<br />
-23. Wind Speed (mph)<br />
-24. Weather Condition – aggregate? (53 factors)<br />
-25. Crossing (presence of crossing nearby)<br />
-26. Traffic_Signal<br />
-27. Sunrise_Sunset<br />
-28. Civil_Twilight – remove<br />
-29. Nautical_Twilight – remove<br />
-30. Astronomical_Twilight – remove</p>
+<div id="outcome" class="section level3">
+<h3>Outcome:</h3>
+<ol style="list-style-type: decimal">
+<li>Severity: severity of the accident in terms of the impact on traffic, which is an integer from 1 to 3 with increasing impact. This is an ordinal variable and the outcome of interest.</li>
+</ol>
+<p>Additionally, the variable had four categories (1-4) but only 24 observations had severity of 1, so we combined severities 1 and 2 and readjusted the scale.</p>
+<p>It should be noted that the dataset sources are rather vague on the definition and derivation of this outcome variable. Length of delay caused by the accident is mentioned, and we assume that scope, such as how many lane closures there are, may also be taken into account when determining the severity.</p>
+</div>
+<div id="predictors" class="section level3">
+<h3>Predictors:</h3>
+<p>*Note, my comments on the variables will be removed once we finalize the filtered dataset</p>
+<p><strong>Location/Time</strong></p>
+<ol style="list-style-type: decimal">
+<li>Source: categorical, API that reported accident (MapQuest, Bing, MapQuest-Bing) – remove?<br />
+</li>
+<li>Start Time – start time of the accident. keep the hour and minute of the day? aggregate?, keep month?<br />
+</li>
+<li>End Time – end time of accident remove?</li>
+<li>Start Lat – remove?<br />
+</li>
+<li>Start Lng – remove?<br />
+</li>
+<li>Description: in Natural Language, description of the accident – remove for now?<br />
+</li>
+<li>Street: character, street name – remove?<br />
+</li>
+<li>Side: categorical, side of street (Left/Right)<br />
+</li>
+<li>City – remove for now? or aggregate rural/urban? (YC: then we need some way to distinguish between rural/urban)<br />
+</li>
+<li>County – remove for now? or aggregate rural/urban?<br />
+</li>
+<li>Zipcode – remove<br />
+</li>
+<li>Airport Code – remove (86 levels)<br />
+</li>
+<li>Sunrise_Sunset: categorical (Day/Night)</li>
+</ol>
+<p><strong>Weather</strong></p>
+<ol start="14" style="list-style-type: decimal">
+<li>Weather Timestamp – remove<br />
+</li>
+<li>Temperature: numeric, degrees Fahrenheit<br />
+</li>
+<li>Humidity: numeric, percentage<br />
+</li>
+<li>Pressure: numeric air pressure, in inches<br />
+</li>
+<li>Visibility: numeric, in miles<br />
+</li>
+<li>Wind Direction — aggregate CALM vs NOT CALM?<br />
+</li>
+<li>Wind Speed: numeric, in mph</li>
+<li>Weather Condition – aggregate? (53 factors)</li>
+</ol>
+<p><strong>Points of Interest</strong></p>
+<ol start="22" style="list-style-type: decimal">
+<li>Crossing: TRUE/FALSE, presence of a crossing nearby<br />
+</li>
+<li>Traffic_Signal: TRUE/FALSE, presence of a traffic signal nearby</li>
+</ol>
+</div>
 </div>
 <div id="methods" class="section level1">
 <h1>Methods</h1>
@@ -1725,6 +1775,9 @@ summary {
 </div>
 <div id="random-forest" class="section level2">
 <h2>Random Forest</h2>
+</div>
+<div id="evaluation-and-comparison-of-models" class="section level2">
+<h2>Evaluation and Comparison of Models</h2>
 </div>
 </div>
 <div id="results" class="section level1">
@@ -1741,6 +1794,9 @@ summary {
 </div>
 <div id="discussion" class="section level1">
 <h1>Discussion</h1>
+<div id="limitations" class="section level2">
+<h2>Limitations</h2>
+</div>
 </div>
 <div id="data-references" class="section level1">
 <h1>Data References</h1>
