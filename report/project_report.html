@@ -1661,25 +1661,67 @@ summary {
 
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
+<p>Sitting in traffic is not ideal for anyone, and it is especially frustrating when the traffic is caused by an accident. It is an unexpected delay, and many times it is completely uncertain how long the delay will last. Traffic accident data can be an invaluble resource, as it can provide information that can potentially aid in predicting conditions where accidents are prone to happen so steps can be taken to prevent the accident. Further, this data could be useful in predicting how severely an accident will delay the following drivers after the accident happens so steps can be taken to reduce this delay as needed.</p>
+<p>Several computer scientists from the Ohio State University present exactly this: a dataset of traffic accidents from the contiguous United States, covering 2.95 million accidents with data collected between February 2016 and December 2019. As of March 2019, of the 49 states included, North Carolina had the fourth highest number of accidents in the dataset at 109,000 [1]. Because of the wide range of attributes collected with each accident in the dataset, this has the potential to provide the information needed to start making decisions about how to prevent accidents and the delays associated.</p>
 </div>
 <div id="project-aim" class="section level1">
 <h1>Project Aim</h1>
-<p>The aim of this project is to use Car Accident Data from North Carolina in 2016-2018 to determine which factors have the most influence on the severity of car accidents in the state. Then, we aim to use these factors to build a model to predict the severity of future car accidents in North Carolina and compare the accuracy with 2019 data.</p>
+<p>The aim of this project is to use Car Accident Data from North Carolina in 2016-2018 to determine which factors have the most influence on the severity of car accidents in the state. We take two different approaches to construct models to predict the severity of car accidents, one through proportional oddes model and one through machine learning. We then use the 2019 data to evaluate and compare the performance of our prediction models.</p>
 </div>
 <div id="r-package" class="section level1">
 <h1>R-Package</h1>
-<p>Our R package <code>name</code> contains …</p>
+<p>Our R package <code>group3project</code> contains functions to fit a proportional odds model, random forest….</p>
 <pre class="r"><code>## load package here </code></pre>
 </div>
 <div id="data" class="section level1">
 <h1>Data</h1>
-<pre class="r"><code>data &lt;- read.csv(&quot;NC_Accidents.csv&quot;)</code></pre>
-<p>Variables: 1. ID – no duplicated IDs, all unique 2. Source (API that reported accident) – remove 3. TMC – remove 4. Severity – response 5. Start Time – keep the hour and minute of the day? 6. End Time 7. Start Lat – remove 8. Start Lng – remove 9. End Lat – remove 10. End Lng – remove 11. Distance (Length of road extent affected by accident) 12. Description (in Natural Language) – remove for now? 13. Number (Street) – remove 14. Street (Name) – remove 15. Side (of Street – R/L) 16. City – remove for now? or aggregate rural/urban? 17. County – remove for now? or aggregate rural/urban? 18. State – remove 19. Zipcode – remove 20. Country – remove 21. Timezone – remove 22. Airport Code – remove 23. Weather Timestamp – remove 24. Temperature 25. Wind Chill 26. Humidity (%) 27. Pressure (Air, in inches) 28. Visibility (in miles) 29. Wind Direction 30. Wind Speed (mph) 31. Precipitation (in inches) 32. Weather Condition – aggregate? 33. Amenity – remove 34. Bump (presence of speed bump in nearby location) 35. Crossing (presence of crossing nearby) 36. Give_Way (presence of give_way sign nearby) 37. Junction (presence of junction nearby) 38. No_Exit (presence of no_exit sign nearby) 39. Railway (presence of railway nearby) 40. Roundabout 41. Station 42. Stop (sign) 43. Traffic_Calming 44. Traffic_Signal 45. Turning_Loop 46. Sunrise_Sunset – pick one of these last four 47. Civil_Twilight 48. Nautical_Twilight 49. Astronomical_Twilight</p>
+<p>The final dataset used contains 119,279 traffic accidents from North Carolina between the years 2016 and 2019. The original dataset had 49 total attributes, including attributes related to traffic, location, weather, points of interest, and period of day. For our purposes, we removed all location attributes.(?? not done yet) We also chose to remove Wind Chill and Precipitation since they had around 60% missingess. Additionally, most of the points of interest variables had very low variability, so we chose only to keep Crossing and Traffic Signal (TRUE/FALSE variables).</p>
+<pre class="r"><code>data_filtered &lt;- read.csv(&quot;../data/NC_Accidents_filtered.csv&quot;)</code></pre>
+<p>Variables:<br />
+(YC: (i) would this be easier to read if we group by their role in the analysis(outcome/predictor candidates/dropped)? (ii)Do we start with the same set subset of variables for both proportional odds model and RF?)</p>
+<p>The Final Selection of Variables is as follows:</p>
+<p><strong>Outcome: </strong> 1. Severity: severity of the accident in terms of the impact on traffic, which is an integer from 1 to 4 with increasing impact. This is an ordinal variable and the outcome of interest.</p>
+<p>(YC: the dataset and paper is rather vague on how severity is defined or derived. Length of delay is the only criterion they explicitly mentioned? I would guess that scope, for example how many lanes affected, is probably taken into account?)</p>
+<p><strong>Predictors: </strong><br />
+1. Source (API that reported accident) – remove<br />
+2. Start Time – start time of the accident. keep the hour and minute of the day? aggregate?, keep month?<br />
+3. End Time<br />
+4. Start Lat – remove 5. Start Lng – remove<br />
+6. Description (in Natural Language) – remove for now?<br />
+7. Number (Street) – remove<br />
+8. Street (Name) – remove<br />
+9. Side (of Street – R/L)<br />
+10. City – remove for now? or aggregate rural/urban? (YC: then we need some way to distinguish between rural/urban)<br />
+11. County – remove for now? or aggregate rural/urban?<br />
+12. State – remove<br />
+13. Zipcode – remove<br />
+14. Country – remove<br />
+15. Timezone – remove<br />
+16. Airport Code – remove<br />
+17. Weather Timestamp – remove<br />
+18. Temperature<br />
+19. Humidity (%)<br />
+20. Pressure (Air, in inches)<br />
+21. Visibility (in miles)<br />
+22. Wind Direction — aggregate CALM vs NOT CALM?<br />
+23. Wind Speed (mph)<br />
+24. Weather Condition – aggregate? (53 factors)<br />
+25. Crossing (presence of crossing nearby)<br />
+26. Traffic_Signal<br />
+27. Sunrise_Sunset<br />
+28. Civil_Twilight – remove<br />
+29. Nautical_Twilight – remove<br />
+30. Astronomical_Twilight – remove</p>
 </div>
 <div id="methods" class="section level1">
 <h1>Methods</h1>
+<p>First, we apply a proportional odds model with the severity of an accident as the outcome, and start time ,&lt;—insert list of candidate variables—&gt;, as predictors. Based on paramter estimates of this model &lt;—potentially with penalization—&gt;, we identify variables that are most associated with severirty. In parallel, &lt;–starting with the same set of variables?–&gt;we use random forest to find the predictors that best yields the best classification.</p>
 <div id="proportional-odds-model" class="section level2">
 <h2>Proportional Odds Model</h2>
+<p>For a single severity outcome <span class="math inline">\(Y_i\)</span> with covariates <span class="math inline">\(X_i\)</span>, the proportional odds model suggests that <span class="math display">\[ logit(P(Y_i\leq k))=log(\frac{P(Y_i\leq k)}{1-P(Y_i\leq k)}) = \alpha_k + X_i^T\beta\]</span> , or equivalently</p>
+<p><span class="math display">\[ P(Y_i\leq k) = \frac{1}{1 + exp(-\alpha_k - X_i^T\beta)}\]</span> for k=1, 2, and 3. The log likelihood function for n accidents is therefore given by (YC: here I use a slightly different notation than the one used by Marco (note the sign of alpha)) <span class="math display">\[\sum_{i=1}^n\sum_{k=1}^4I(Y_i=k)log(P(Y_i=k))\\
+=\sum_{i=1}^n \{I(Y_i=1)log(P(Yi\le1))+ I(Y_i=2)[log(P(Yi\le2)-P(Y_i\le1)] + I(Y_i=3)[log(P(Yi\le3)-P(Y_i\le2)] + I(Y_i=4)[log(1-P(Y_i\le3)]\}\\
+=\sum_{i=1}^n\{I(Y_i=1)log(\frac{1}{1+exp(-\alpha_1 - X_i^T\beta)})+ I(Y_i=2)log(\frac{1}{1+exp(-\alpha_2 - X_i^T\beta)}-\frac{1}{1+exp(-\alpha_1 - X_i^T\beta)})+ \\I(Y_i=3)log(\frac{1}{1+exp(-\alpha_3 - X_i^T\beta)}-\frac{1}{1+exp(-\alpha_2 - X_i^T\beta)})+ I(Y_i=2)log(\frac{1}{1+exp(-\alpha_2 - X_i^T\beta)}-\frac{1}{1+exp(-\alpha_1 - X_i^T\beta)})\}\]</span> (YC: Do we want to access the proportional odds assumption?)</p>
 </div>
 <div id="random-forest" class="section level2">
 <h2>Random Forest</h2>
@@ -1702,9 +1744,9 @@ summary {
 </div>
 <div id="data-references" class="section level1">
 <h1>Data References</h1>
-<p><a href="https://www.kaggle.com/sobhanmoosavi/us-accidents" class="uri">https://www.kaggle.com/sobhanmoosavi/us-accidents</a></p>
-<p>Moosavi, Sobhan, Mohammad Hossein Samavatian, Srinivasan Parthasarathy, and Rajiv Ramnath. “A Countrywide Traffic Accident Dataset.”, 2019.</p>
-<p>Moosavi, Sobhan, Mohammad Hossein Samavatian, Srinivasan Parthasarathy, Radu Teodorescu, and Rajiv Ramnath. “Accident Risk Prediction based on Heterogeneous Sparse Data: New Dataset and Insights.” In proceedings of the 27th ACM SIGSPATIAL International Conference on Advances in Geographic Information Systems, ACM, 2019.</p>
+<p>Source of data: <a href="https://www.kaggle.com/sobhanmoosavi/us-accidents" class="uri">https://www.kaggle.com/sobhanmoosavi/us-accidents</a></p>
+<p>[1] Moosavi, Sobhan, Mohammad Hossein Samavatian, Srinivasan Parthasarathy, and Rajiv Ramnath. “A Countrywide Traffic Accident Dataset.”, 2019.</p>
+<p>[2] Moosavi, Sobhan, Mohammad Hossein Samavatian, Srinivasan Parthasarathy, Radu Teodorescu, and Rajiv Ramnath. “Accident Risk Prediction based on Heterogeneous Sparse Data: New Dataset and Insights.” In proceedings of the 27th ACM SIGSPATIAL International Conference on Advances in Geographic Information Systems, ACM, 2019.</p>
 </div>
 
 
