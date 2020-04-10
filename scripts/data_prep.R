@@ -89,7 +89,8 @@ colSums(apply(data.filter.2, MARGIN = 2, is.na))
 
 
 #Drop End_Lat (119596 missing), End_Lng (119596 missing) and
-#TMC, Number, State, Country, Timezone (not useful infos) and
+#TMC and Number (not useful infos) and
+#State, Country, and Timezone (No variability)  and
 #Civil_Twilight, Nautical_Twilight and Astronomical_Twilight (Duplicate info with Sunrise_Sunset)
 data.filter.3 = data.filter.2[, c("End_Lat", "End_Lng", 
                                   "TMC", "Number", "State", "Country", "Timezone",
@@ -108,7 +109,7 @@ data.complete = data.filter.4[rowSums(is.na(data.filter)) == 0, ]  #Include only
 colSums(apply(data.complete, MARGIN = 2, is.na))  #No Missingness, Data with complete cases
 
 str(data.complete)
-#Use data from Years before 2019 as traning data set, and Data from 2019 as testing data set
+
 
 
 #Finally, check outcome variable: Severity
@@ -134,6 +135,10 @@ table(data.complete$Severity)
 # #data.complete$County[data.complete$County %in% suburban] <- "Suburban"
 # data.complete$County <- data.complete$County %>% as.factor()
 
+
+
+#Another possible outcome to predict: Duration of car accidents management (that causes traffic congestion).
+
 data.complete$Start_Time= as.POSIXct(data.complete$Start_Time, format = "%Y-%m-%d %H:%M:%OS")
 data.complete$End_Time= as.POSIXct(data.complete$End_Time, format = "%Y-%m-%d %H:%M:%OS")
 data.complete$time_diff <- difftime(data.complete$End_Time,data.complete$Start_Time) %>% as.numeric()
@@ -146,6 +151,10 @@ data.complete$time_diff[data.complete$time_diff > 53 & data.complete$time_diff<=
 data.complete$time_diff[data.complete$time_diff > 85 ] <- 4
 data.complete$time_diff <- data.complete$time_diff %>% as.factor()
 summary(data.complete$time_diff)
+
+
+
+#Use data from Years before 2019 as traning data set, and Data from 2019 as testing data set
 
 train.data = data.complete[year < 2019, ]
 test.data = data.complete[year == 2019, ]
