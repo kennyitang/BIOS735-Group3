@@ -111,15 +111,29 @@ First, we apply a proportional odds model with the severity of an accident as th
 
 ## Proportional Odds Model  
 For a single severity outcome $Y_i$ with covariates $X_i$, the proportional odds model suggests that 
-$$ logit(P(Y_i\leq k))=log(\frac{P(Y_i\leq k)}{1-P(Y_i\leq k)}) = \alpha_k + X_i^T\beta$$
-, or equivalently
+$$ logit(P(Y_i\leq k))=log(\frac{P(Y_i\leq k)}{1-P(Y_i\leq k)}) = \alpha_k - x_i^T\beta$$
+, where $\beta = (\beta_1,...,\beta_p)^T$, $x_i = (x_{i1},..., x_{ip})^T$, k=1, 2, and 3,.
 
-$$ P(Y_i\leq k) = \frac{1}{1 + exp(-\alpha_k - X_i^T\beta)}$$
-for k=1, 2, and 3. The log likelihood function for n accidents is therefore given by (YC: here I use a slightly different notation than the one used by Marco (note the sign of alpha))
-$$\sum_{i=1}^n\sum_{k=1}^4I(Y_i=k)log(P(Y_i=k))\\
+Equivalently, if we define $$\phi(t) = \frac{1}{1+exp(-t)}$$
+, then $$P(Y_i\leq k) = \frac{1}{1 + exp(x_i^T\beta-\alpha_k)} = \phi(\alpha_k-x_i^T\beta)$$
+
+.The log likelihood function for n accidents is therefore given by 
+$$l(\alpha, \beta) = \sum_{i=1}^n\sum_{k=1}^4I(Y_i=k)log(P(Y_i=k))\\
 =\sum_{i=1}^n \{I(Y_i=1)log(P(Yi\le1))+ I(Y_i=2)[log(P(Yi\le2)-P(Y_i\le1)] + I(Y_i=3)[log(P(Yi\le3)-P(Y_i\le2)] + I(Y_i=4)[log(1-P(Y_i\le3)]\}\\
-=\sum_{i=1}^n\{I(Y_i=1)log(\frac{1}{1+exp(-\alpha_1 - X_i^T\beta)})+ I(Y_i=2)log(\frac{1}{1+exp(-\alpha_2 - X_i^T\beta)}-\frac{1}{1+exp(-\alpha_1 - X_i^T\beta)})+ \\I(Y_i=3)log(\frac{1}{1+exp(-\alpha_3 - X_i^T\beta)}-\frac{1}{1+exp(-\alpha_2 - X_i^T\beta)})+ I(Y_i=2)log(\frac{1}{1+exp(-\alpha_2 - X_i^T\beta)}-\frac{1}{1+exp(-\alpha_1 - X_i^T\beta)})\}$$
-(YC: Do we want to access the proportional odds assumption?)
+=\sum_{i=1}^n\{I(Y_i=1)log(\phi(\alpha1-x_i^T\beta))+ I(Y_i=2)log(\phi(\alpha2-x_i^T\beta)-\phi(\alpha1-x_i^T\beta))+ I(Y_i=3)log(\phi(\alpha3-x_i^T\beta) -\phi(\alpha2-x_i^T\beta))+ I(Y_i=4)log(1-\phi(\alpha3-x_i^T\beta))\}$$  
+, where $\alpha = (\alpha_1,\alpha_2, \alpha_3)^T.$
+
+The gradient is $(\frac{\partial l(\alpha, \beta)}{\partial \beta_1}, ..., \frac{\partial l(\alpha, \beta)}{\partial \beta_p}, \frac{\partial l(\alpha, \beta)}{\partial \alpha_1},..., \frac{\partial l(\alpha, \beta)}{\partial \alpha_3})^T$, and the individual elements are given below. 
+
+$$\frac{\partial l(\alpha, \beta)}{\partial \beta_j}
+= \sum_{i=1}^n\left(-I(Y_i=1)\frac{exp(x_i^T\beta-\alpha_1)}{1+exp(x_i^T\beta-\alpha_1)}x_{ij} + I(Y_i=2)\frac{\frac{exp(x_i^T\beta-\alpha_1)}{[1+exp(x_i^T\beta-\alpha_1)]^2}-\frac{exp(x_i^T\beta-\alpha_2)}{[1+exp(x_i^T\beta-\alpha_2)]^2}}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)}x_{ij} + I(Y_i=3)\frac{\frac{exp(x_i^T\beta-\alpha_2)}{[1+exp(x_i^T\beta-\alpha_2)]^2}-\frac{exp(x_i^T\beta-\alpha_3)}{[1+exp(x_i^T\beta-\alpha_3)]^2}}{\phi(\alpha_3-x_i^T\beta)-\phi(\alpha_2-x_i^T\beta)}x_{ij} + I(Y_i=4)\frac{x_{ij}}{1+exp(x_i^T\beta-\alpha_3)}\right)\\
+=\sum_{i=1}^n\left(-I(Y_i=1)(1-\phi(\alpha_1-x_i^T\beta)) + I(Y_i=2)\frac{\phi(\alpha_1-x_i^T\beta)[1-\phi(\alpha_1-x_i^T\beta)]-\phi(\alpha_2-x_i^T\beta)[1-\phi(\alpha_2-x_i^T\beta)]}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)} + I(Y_i=3)\frac{\phi(\alpha_2-x_i^T\beta)[1-\phi(\alpha_2-x_i^T\beta)]-\phi(\alpha_3-x_i^T\beta)[1-\phi(\alpha_3-x_i^T\beta)]}{\phi(\alpha_3-x_i^T\beta)-\phi(\alpha_2-x_i^T\beta)} + I(Y_i=4)\phi(\alpha_3-x_i^T\beta)\right)x_{ij}$$
+
+$$ \frac{\partial l(\alpha, \beta)}{\partial \alpha_1} = \sum_{i=1}^n \left( I(Y_i=1)\frac{exp(x_i^T\beta-\alpha_1)}{1+exp(x_i^T\beta-\alpha_1)}-I(Y_i=2)\frac{\frac{exp(x_i^T\beta-\alpha_1)}{[1+exp(x_i^T\beta-\alpha_1)]^2}}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)} \right)=\sum_{i=1}^n\left( I(Y_i=1)[1-\phi(\alpha_1-x_i^T\beta)] - I(Y_i=2)\frac{\phi(\alpha_1-x_i^T\beta)[1-\phi(\alpha_1-x_i^T\beta)]}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)} \right)$$
+
+$$ \frac{\partial l(\alpha, \beta)}{\partial \alpha_2} = \sum_{i=1}^n \left( I(Y_i=2)\frac{\frac{exp(x_i^T\beta-\alpha_2)}{[1+exp(x_i^T\beta-\alpha_2)]^2}}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)}-I(Y_i=3)\frac{\frac{exp(x_i^T\beta-\alpha_2)}{[1+exp(x_i^T\beta-\alpha_2)]^2}}{\phi(\alpha_3-x_i^T\beta)-\phi(\alpha_2-x_i^T\beta)} \right)=\sum_{i=1}^n\left( I(Y_i=2)\frac{\phi(\alpha_2-x_i^T\beta)[1-\phi(\alpha_2-x_i^T\beta)]}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)} - I(Y_i=3)\frac{\phi(\alpha_2-x_i^T\beta)[1-\phi(\alpha_2-x_i^T\beta)]}{\phi(\alpha_3-x_i^T\beta)-\phi(\alpha_2-x_i^T\beta)} \right)$$
+
+$$ \frac{\partial l(\alpha, \beta)}{\partial \alpha_3} = \sum_{i=1}^n \left( I(Y_i=3)\frac{\frac{exp(x_i^T\beta-\alpha_3)}{[1+exp(x_i^T\beta-\alpha_3)]^2}}{\phi(\alpha_3-x_i^T\beta)-\phi(\alpha_2-x_i^T\beta)}-I(Y_i=4)\frac{\frac{exp(x_i^T\beta-\alpha_3)}{[1+exp(x_i^T\beta-\alpha_3)]^2}}{1-\phi(\alpha_3-x_i^T\beta)} \right)=\sum_{i=1}^n\left( I(Y_i=3)\frac{\phi(\alpha_3-x_i^T\beta)[1-\phi(\alpha_3-x_i^T\beta)]}{\phi(\alpha_3-x_i^T\beta)-\phi(\alpha_2-x_i^T\beta)} - I(Y_i=4)\frac{\phi(\alpha_3-x_i^T\beta)[1-\phi(\alpha_3-x_i^T\beta)]}{1-\phi(\alpha_3-x_i^T\beta)} \right)$$
 
 ## Random Forest
 
