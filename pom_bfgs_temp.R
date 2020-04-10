@@ -40,6 +40,9 @@ loglik.pom = function(y, X, param){
   
   #indicator matrix. One column for each response category.
   #use this to subset data matrix by response category values
+  
+  # y needs to start at zero for this to work!
+  
   Z = matrix(NA, nrow = nrow(X), ncol = length(unique(y)))
   for (j in 1: ncol(Z)){
     Z[,j] = as.numeric(I(y) == (j - 1))
@@ -96,17 +99,17 @@ gradient.pom = function(param, y, X){
     XJ = as.matrix(X[(diag(Z[,ncol(Z)]) %*% X) != 0,kk])
     
     value1 = 0
-    value1 =  sum(- X1 * exp(X1 %*% beta[kk] - a_vec[1]) / (1 + exp(X1 %*% beta[kk] - a_vec[1]))) +
-       sum(XJ / (1 + exp(XJ %*% beta[kk] - a_vec[catgry])))
+    value1 =  sum(- X1 * exp(X1 %*% beta - a_vec[1]) / (1 + exp(X1 %*% beta - a_vec[1]))) +
+       sum(XJ / (1 + exp(XJ %*% beta - a_vec[catgry])))
       
     #d1 for the middle threshold values
     value2 = 0 
     for (i in 2: (length(a_vec) -1) ){
       
       X.mid = as.matrix(X[(diag(Z[,i]) %*% X) != 0,kk])
-      mid.d1 = sum( 1 / (logistic(a_vec[i] - X.mid %*% beta[kk] ) - logistic(a_vec[i-1] - X.mid %*% beta[kk]) ) * 
-        ( X.mid * exp(X.mid %*% beta[kk] - a_vec[i-1]) / (1 + exp(X.mid %*% beta[kk] - a_vec[i-1]))^2 - 
-            X.mid * exp(X.mid %*% beta[kk] - a_vec[i]) / (1 + exp(X.mid %*% beta[kk] - a_vec[i]))^2 ) )
+      mid.d1 = sum( 1 / (logistic(a_vec[i] - X.mid %*% beta ) - logistic(a_vec[i-1] - X.mid %*% beta) ) * 
+        ( X.mid * exp(X.mid %*% beta - a_vec[i-1]) / (1 + exp(X.mid %*% beta - a_vec[i-1]))^2 - 
+            X.mid * exp(X.mid %*% beta - a_vec[i]) / (1 + exp(X.mid %*% beta - a_vec[i]))^2 ) )
         
       value2 = value2 + mid.d1
     }
@@ -118,21 +121,29 @@ gradient.pom = function(param, y, X){
   # diag(Z[,i]) %*% X leaves all X row values zero except for those rows with y == i
   # (diag(Z[,i]) %*% X[,kk]) %*% beta[kk] should mean using X values associated with response value i and the kk_th beta parameter
   X1.a = as.matrix(X[(diag(Z[,1]) %*% X != 0),])
+  X2.a = as.matrix(X[(diag(Z[,2]) %*% X != 0),])
+  XJm1.a = as.matrix(X[(diag(Z[,ncol(Z)-1]) %*% X) != 0,])
   XJ.a = as.matrix(X[(diag(Z[,ncol(Z)]) %*% X) != 0,])
   
   value1 = 0
-  value1 = sum( exp(X1.a %*% beta - a_vec[1]) / (1 + exp(X1.a %*% beta - a_vec[1])) )
+  value1 = sum( exp(X1.a %*% beta - a_vec[1]) / (1 + exp(X1.a %*% beta - a_vec[1]))) - 
+                sum( logistic(a_vec[1] - X2.a %*% beta) * (1 - logistic(a_vec[1] - X2.a %*% beta)) / 
+                  ( logistic(a_vec[2] - X2.a %*% beta) - logistic(a_vec[1] - X2.a %*% beta) ) )
   valuej = 0
-  valuej = sum( -1 / (1 + exp( XJ.a %*% beta - a_vec[catgry])) )
+  valuej = sum( logistic(a_vec[catgry] - XJm1.a %*% beta)*(1-logistic(a_vec[catgry] - XJm1.a %*% beta) ) / 
+                  (logistic(a_vec[catgry] - XJm1.a %*% beta) - logistic(a_vec[catgry-1] - XJm1.a %*% beta)) ) - 
+                  sum( 1 / (1 + exp( XJ.a %*% beta - a_vec[catgry])) )
   
   #d1 for the middle threshold values
   valuem = rep(0, catgry - 2)
   for (i in 2: catgry -1){
     
     Xmid.a = as.matrix(X[(diag(Z[,i]) %*% X) != 0,])
+    Xmid.a.p1 = as.matrix(X[(diag(Z[,i+1]) %*% X) != 0,])
     valuem[i-1] = sum( 1 / (logistic(a_vec[i] - Xmid.a %*% beta) - logistic(a_vec[i-1] - Xmid.a %*% beta) ) * 
-      ( exp(Xmid.a - a_vec[i]) / (1 + exp(Xmid.a %*% beta - a_vec[i]))^2 ) )
-    
+                         ( exp(Xmid.a - a_vec[i]) / (1 + exp(Xmid.a %*% beta - a_vec[i]))^2 ) ) - 
+      sum( logistic(a_vec[i] - Xmid.a.p1 %*% beta) * (1 - logistic(a_vec[i] - Xmid.a.p1 %*% beta)) / 
+        (logistic(a_vec[i+1] - Xmid.a.p1 %*% beta) - logistic(a_vec[i] - Xmid.a.p1 %*% beta) ) )
   }
 
   d1.a = c(value1, valuem, valuej)
