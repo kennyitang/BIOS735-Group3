@@ -119,6 +119,33 @@ data.complete[Severity == 1, Severity := 2]
 data.complete[, Severity := Severity-1]
 table(data.complete$Severity)
 
+#
+# #attempt to aggregate county -- 95% urban 
+# urban <- c("Alamance", "Buncombe", "Craven", "Cabarrus", "Dare",
+#            "Cumberland", "Durham", "Gaston", "Guilford", "Mecklenburg", 
+#            "New Hanover", "Onslow", "Orange", "Wake")
+# #suburban <- c("Alexander", "Brunswick", "Cabarrus", "Chatham", "Currituck", "Davidson", 
+# #              "Davie", "Franklin", "Gaston", "Gates", "Haywood", "Henderson", "Hoke", 
+# #              "Iredell", "Johnston", "Jones", "Lincoln", "Madison", "Pamlico", "Pender", 
+# #              "Person", "Randolph", "Rockingham", "Rowan", "Stokes", "Union", "Yadkin")
+# data.complete$County <- data.complete$County %>% as.character()
+# data.complete$County[!(data.complete$County %in% c(urban))] <- "Rural"
+# data.complete$County[data.complete$County %in% urban] <- "Urban"
+# #data.complete$County[data.complete$County %in% suburban] <- "Suburban"
+# data.complete$County <- data.complete$County %>% as.factor()
+
+data.complete$Start_Time= as.POSIXct(data.complete$Start_Time, format = "%Y-%m-%d %H:%M:%OS")
+data.complete$End_Time= as.POSIXct(data.complete$End_Time, format = "%Y-%m-%d %H:%M:%OS")
+data.complete$time_diff <- difftime(data.complete$End_Time,data.complete$Start_Time) %>% as.numeric()
+ggplot(data.complete, aes(time_diff)) + geom_histogram(binwidth = 1) + xlim(0,100) + 
+  geom_vline(xintercept = c(37,53,85), col = "red")
+
+data.complete$time_diff[data.complete$time_diff <= 37] <- 1
+data.complete$time_diff[data.complete$time_diff > 37 & data.complete$time_diff<= 53] <- 2
+data.complete$time_diff[data.complete$time_diff > 53 & data.complete$time_diff<= 85] <- 3
+data.complete$time_diff[data.complete$time_diff > 85 ] <- 4
+data.complete$time_diff <- data.complete$time_diff %>% as.factor()
+summary(data.complete$time_diff)
 
 train.data = data.complete[year < 2019, ]
 test.data = data.complete[year == 2019, ]
@@ -129,9 +156,3 @@ nrow(data.complete) == nrow(train.data) + nrow(test.data)   #Checking number of 
 fwrite(data.complete, "./Data/NC_Accidents_filtered.csv")
 fwrite(train.data, "./Data/NC_Accidents_trn.csv")
 fwrite(test.data, "./Data/NC_Accidents_tst.csv")
-
-
-
-
-
-
