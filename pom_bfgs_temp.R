@@ -28,7 +28,6 @@ logistic = function(t){
   return(logis)
 }
 
-
 # loglikelihood function
 loglik.pom = function(y, X, param){
   
@@ -57,11 +56,13 @@ loglik.pom = function(y, X, param){
   
   #likelihood for the middle threshold values
   value2 = 0 
-  for (i in 2: (length(a_vec) -1) ){
+  for (i in 2: length(a_vec) ){
     
     X.mid = as.matrix(X[(diag(Z[,i]) %*% X) != 0,])
-    mid.ll = sum(log(logistic(a_vec[i] - X.mid %*% beta) - 
-                logistic(a_vec[i - 1] - X.mid %*% beta))) # same set of X rows for two cutoff values
+    subtrac = logistic(a_vec[i] - X.mid %*% beta) - 
+                    logistic(a_vec[i - 1] - X.mid %*% beta)
+    subtrac = ifelse(subtrac < 0, 0, subtrac)
+    mid.ll = sum(log(subtrac)) # same set of X rows for two cutoff values
     value2 = value2 + mid.ll
     
   }
@@ -69,7 +70,6 @@ loglik.pom = function(y, X, param){
   loglikesum = value1 + value2
   return(loglikesum)
 }
-
 
 
 # lets write a function for the first derivative
@@ -95,21 +95,21 @@ gradient.pom = function(param, y, X){
     #d1 for the first and last threshold values
     # diag(Z[,i]) %*% X leaves all X row values zero except for those rows with y == i
     # (diag(Z[,i]) %*% X[,kk]) %*% beta[kk] should mean using X values associated with response value i and the kk_th beta parameter
-    X1 = as.matrix(X[(diag(Z[,1]) %*% X != 0),kk])
-    XJ = as.matrix(X[(diag(Z[,ncol(Z)]) %*% X) != 0,kk])
+    X1 = as.matrix(X[(diag(Z[,1]) %*% X != 0),])
+    XJ = as.matrix(X[(diag(Z[,ncol(Z)]) %*% X) != 0,])
     
     value1 = 0
-    value1 =  sum(- X1 * exp(X1 %*% beta - a_vec[1]) / (1 + exp(X1 %*% beta - a_vec[1]))) +
-       sum(XJ / (1 + exp(XJ %*% beta - a_vec[catgry])))
+    value1 =  sum(- X1[,kk] * exp(X1 %*% beta - a_vec[1]) / (1 + exp(X1 %*% beta - a_vec[1]))) +
+       sum(XJ[,kk] / (1 + exp(XJ %*% beta - a_vec[catgry])))
       
     #d1 for the middle threshold values
     value2 = 0 
-    for (i in 2: (length(a_vec) -1) ){
+    for (i in 2: length(a_vec) ){
       
-      X.mid = as.matrix(X[(diag(Z[,i]) %*% X) != 0,kk])
+      X.mid = as.matrix(X[(diag(Z[,i]) %*% X) != 0,])
       mid.d1 = sum( 1 / (logistic(a_vec[i] - X.mid %*% beta ) - logistic(a_vec[i-1] - X.mid %*% beta) ) * 
-        ( X.mid * exp(X.mid %*% beta - a_vec[i-1]) / (1 + exp(X.mid %*% beta - a_vec[i-1]))^2 - 
-            X.mid * exp(X.mid %*% beta - a_vec[i]) / (1 + exp(X.mid %*% beta - a_vec[i]))^2 ) )
+        ( X.mid[,kk] * exp(X.mid %*% beta - a_vec[i-1]) / (1 + exp(X.mid %*% beta - a_vec[i-1]))^2 - 
+            X.mid[,kk] * exp(X.mid %*% beta - a_vec[i]) / (1 + exp(X.mid %*% beta - a_vec[i]))^2 ) )
         
       value2 = value2 + mid.d1
     }
@@ -136,7 +136,7 @@ gradient.pom = function(param, y, X){
   
   #d1 for the middle threshold values
   valuem = rep(0, catgry - 2)
-  for (i in 2: catgry -1){
+  for (i in 2: (catgry -1) ){
     
     Xmid.a = as.matrix(X[(diag(Z[,i]) %*% X) != 0,])
     Xmid.a.p1 = as.matrix(X[(diag(Z[,i+1]) %*% X) != 0,])
@@ -162,6 +162,7 @@ library(optimx)
 fit = optimx(
   par = c(init.a_vec, init.beta), # initial values for the parameters. 
   fn = function(x, X, y){loglik.pom(param = x, y=y, X=X)}, # log likelihood
+#  gr = NULL, # use this to debug fn and gr separately
   gr = function(x, X, y){gradient.pom(param = x, y=y, X=X)}, # gradient/1st derivative
   method = "BFGS",
   y = y,
@@ -174,7 +175,12 @@ fit = optimx(
     # parscale = vector of scaling values to correct for scale differencs in parameters.  Should be the same length as the num of parameters
   )
 )
+
+grchk(par, function(x, X, y){loglik.pom(param = x, y=y, X=X)} , 
+      function(x, X, y){gradient.pom(param = x, y=y, X=X)}, trace=100, y = y,X = X)
+
 print(fit) 
+
 
 optimHess(par, fn, gr = NULL, ..., control = list())
 
