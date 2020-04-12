@@ -27,6 +27,7 @@ str(trn.data)
 variable.names(trn.data)
 
 trn.data$Severity.c = as.factor(trn.data$Severity)  #Make severity a factor varialbe
+trn.data$time_diff = as.factor(trn.data$time_diff)  #Make severity a factor varialbe
 
 
 #Response (Severity) vs. Numerical variables
