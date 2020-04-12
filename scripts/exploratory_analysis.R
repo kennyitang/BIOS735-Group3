@@ -57,15 +57,19 @@ featurePlot(x = trn.data[, .(`Temperature(F)`, `Humidity(%)`, `Pressure(in)`,
             layout = c(5, 1))
 
 
-  #Scatter plots of the Numerical variables by Severity
+  #Scatter plots of the Numerical variables by Severity - not very readable b/c of too many data points
+
+#If the following error is generated for you:
+#   Error in grid.Call.graphics(C_downviewport, name$name, strict) : 
+#   Viewport 'plot_01.panel.1.1.off.vp' was not found
+#Then need to install package "ellipse"
+#   install.packages("ellipse")
 featurePlot(x = trn.data[, .(`Temperature(F)`, `Humidity(%)`, `Pressure(in)`, 
                              `Visibility(mi)`, `Wind_Speed(mph)`)], 
             y = trn.data$Severity.c,
             plot = "ellipse",
             auto.key = list(columns = 3))
-#install.packages("ellipse")
-#Error in grid.Call.graphics(C_downviewport, name$name, strict) : 
-#Viewport 'plot_01.panel.1.1.off.vp' was not found
+
 
 
 
@@ -73,7 +77,7 @@ featurePlot(x = trn.data[, .(`Temperature(F)`, `Humidity(%)`, `Pressure(in)`,
 
 #Response (Severity) vs. Categorical variables
 # "Side" "Weather_Condition"  "Crossing" "Traffic_Signal" "Sunrise_Sunset" 
-# "Civil_Twilight" "Nautical_Twilight" "Astronomical_Twilight"
+
 
   #Cross tabs of Severity and each categorical variable and Bar charts by Severity
 
@@ -90,8 +94,9 @@ ggplot(trn.data, aes(x = Side, group = Severity.c)) +
   scale_y_continuous(labels=scales::percent) +
   theme_minimal()
 
+
 #Weather condition
-table(trn.data$Severity.c, trn.data$Weather_Condition) #Too many categories, might want to combine some
+table(trn.data$Severity.c, trn.data$Weather_Condition) #Too many categories, might want to aggregate
 table(trn.data$Weather_Condition)
 
 
