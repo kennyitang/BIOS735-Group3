@@ -119,6 +119,8 @@ Secondly, we implement the random forest method directly from the `caret` packag
 ## Evaluation and Comparison of Models
 One way to evaluate the performance of our methods is to test the accuracy of the models on the test set. To do this, a function is created that takes the fraction of the correctly classified observations divided by the total number of observations in the test set. 
 
+Another method to evaluate categorical models is to use Cohen's Kappa, which scales the accuracy to account for the predictions that are correct by guessing. 
+
 # Results 
 
 ## Proportional Odds Model 

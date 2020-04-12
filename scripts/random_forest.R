@@ -67,5 +67,6 @@ varImpPlot(rf_mod_red$finalModel)
   #Obtain test accuracy
 calc_acc(actual = tst_data$Severity_c, predicted = predict(rf_mod_red, newdata = tst_data))
 
-
+# Confusion Matrix, has a lot of metrics including Kappa
+confusionMatrix(predict(rf_mod_red, newdata = tst_data), tst_data$Severity_c)
 
