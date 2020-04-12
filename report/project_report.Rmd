@@ -45,20 +45,10 @@ Our R package `group3project` contains the functions needed to fit a proportiona
 
 # Data
 
-The final dataset used contains 119,279 traffic accidents from North Carolina between the years 2016 and 2019. The original dataset had 49 total attributes, including attributes related to traffic, location, weather, points of interest, and period of day. For our purposes, we removed most location attributes (?? not done yet). We also chose to remove Wind Chill and Precipitation since they had around 60% missingess. Additionally, most of the points of interest variables had very low variability across observations, so we chose only to keep Crossing and Traffic Signal.
+The final dataset used contains 119,279 traffic accidents from North Carolina between the years 2016 and 2019. The original dataset had 49 total attributes, including attributes related to traffic, location, weather, points of interest, and period of day. For our purposes, we removed most location attributes due to various reasons. After aggregating the County variable into urban and rural factor levels, it was apparent that about 95% of the accident data was derived from urban areas. Therefore this information was not useful for prediction. We also chose to remove Wind Chill and Precipitation since they had around 60% missingess. Additionally, most of the points of interest variables had very low variability across observations, so we chose only to keep Crossing and Traffic Signal.
 
 In terms of traffic incidents, rows were removed that were missing all weather variables. Additionally, the data were split up into training data (pre-2019) and testing data (2019) as mentioned previously. The final training dataset has 75,887 observations and the testing has 43,392.
 
-```{r}
-data_filtered <- read.csv("../data/NC_Accidents_filtered.csv")
-data_training <- read.csv("../data/NC_Accidents_trn.csv")
-data_testing <- read.csv("../data/NC_Accidents_tst.csv")
-```
-
-Variables:  
-      (YC: (i) would this be easier to read if we group by their role in the analysis(outcome/predictor candidates/dropped)?
-           (ii)Do we start with the same set subset of variables for both proportional odds model and RF?)
-           
 The Final Selection of Variables is as follows: 
 
 ### Outcome:
@@ -74,39 +64,27 @@ It should be noted that the dataset sources are rather vague on the definition a
   
 **Location/Time** 
 
-1. Source: categorical, API that reported accident (MapQuest, Bing, MapQuest-Bing) -- remove?   
-2. Start Time -- start time of the accident. keep the hour and minute of the day? aggregate?, keep month?  
-3. End Time   -- end time of accident remove? 
-4. Start Lat -- remove?  
-5. Start Lng -- remove?  
-6. Description: in Natural Language, description of the accident  -- remove for now?  
-7. Street: character, street name -- remove?  
-8. Side: categorical, side of street (Left/Right)  
-9. City -- remove for now? or aggregate rural/urban? (YC: then we need some way to distinguish between rural/urban)  
-10. County -- remove for now? or aggregate rural/urban?  
-11. Zipcode -- remove   
-12. Airport Code -- remove (86 levels)    
-13. Sunrise_Sunset: categorical (Day/Night)  
+1. Source: categorical, API that reported accident (MapQuest, Bing, MapQuest-Bing)
+2. Side: categorical, side of street (Left/Right)  
+3. Sunrise_Sunset: categorical (Day/Night)  
   
 **Weather**  
 
-14. Weather Timestamp -- remove  
-15. Temperature: numeric, degrees Fahrenheit    
-16. Humidity: numeric, percentage  
-17. Pressure: numeric air pressure, in inches  
-18. Visibility: numeric, in miles  
-19. Wind Direction --- aggregate CALM vs NOT CALM?  
-20. Wind Speed: numeric, in mph 
-21. Weather Condition -- aggregate? (53 factors)  
+4. Temperature: numeric, degrees Fahrenheit    
+5. Humidity: numeric, percentage  
+6. Pressure: numeric air pressure, in inches  
+7. Visibility: numeric, in miles  
+8. Wind Direction --- aggregate CALM vs NOT CALM?  (not using right now)
+9. Wind Speed: numeric, in mph 
+10. Weather Condition -- aggregate? (53 factors)  (not using right now)
   
 **Points of Interest**  
 
-22. Crossing: TRUE/FALSE, presence of a crossing nearby  
-23. Traffic_Signal: TRUE/FALSE, presence of a traffic signal nearby  
+11. Crossing: TRUE/FALSE, presence of a crossing nearby  
+12. Traffic_Signal: TRUE/FALSE, presence of a traffic signal nearby  
 
 # Methods 
-First, we apply a proportional odds model with the severity of an accident as the outcome, and start time ,<---insert list of candidate variables--->, as predictors. Based on paramter estimates of this model <---potentially with penalization--->, we identify variables that are most associated with severirty. In parallel, <--starting with the same set of variables?-->we use random forest to find the predictors that best yields the best classification.  
-
+First, we apply a proportional odds model with the severity of an accident as the outcome, and start time ,<---insert list of candidate variables--->, as predictors. Based on paramter estimates of this model <---potentially with penalization--->, we identify variables that are most associated with severity. In parallel, starting with the same set of variables, we use random forest to find the predictors and build a model that best yields the best classification.  
 
 
 ## Proportional Odds Model  
@@ -136,8 +114,10 @@ $$ \frac{\partial l(\alpha, \beta)}{\partial \alpha_2} = \sum_{i=1}^n \left( I(Y
 $$ \frac{\partial l(\alpha, \beta)}{\partial \alpha_3} = \sum_{i=1}^n \left( I(Y_i=3)\frac{\frac{exp(x_i^T\beta-\alpha_3)}{[1+exp(x_i^T\beta-\alpha_3)]^2}}{\phi(\alpha_3-x_i^T\beta)-\phi(\alpha_2-x_i^T\beta)}-I(Y_i=4)\frac{\frac{exp(x_i^T\beta-\alpha_3)}{[1+exp(x_i^T\beta-\alpha_3)]^2}}{1-\phi(\alpha_3-x_i^T\beta)} \right)=\sum_{i=1}^n\left( I(Y_i=3)\frac{\phi(\alpha_3-x_i^T\beta)[1-\phi(\alpha_3-x_i^T\beta)]}{\phi(\alpha_3-x_i^T\beta)-\phi(\alpha_2-x_i^T\beta)} - I(Y_i=4)\frac{\phi(\alpha_3-x_i^T\beta)[1-\phi(\alpha_3-x_i^T\beta)]}{1-\phi(\alpha_3-x_i^T\beta)} \right)$$
 
 ## Random Forest
+Secondly, we implement the random forest method directly from the `caret` package in R for a comparison to the proportional odds model.  We use 5-fold Cross Validation on the training data to build the model. Additionally, a tuning grid is used to tune the parameter `mtry`, which defines the number of variables randomly collected to be sampled at each split time. The tuning grid used explored `mtry` values between $1$ and $3$. 
 
 ## Evaluation and Comparison of Models
+One way to evaluate the performance of our methods is to test the accuracy of the models on the test set. To do this, a function is created that takes the fraction of the correctly classified observations divided by the total number of observations in the test set. 
 
 # Results 
 
@@ -162,4 +142,6 @@ Source of data: https://www.kaggle.com/sobhanmoosavi/us-accidents
       Teodorescu, and Rajiv Ramnath. "Accident Risk Prediction based on Heterogeneous
       Sparse Data: New Dataset and Insights." In proceedings of the 27th ACM SIGSPATIAL
       International Conference on Advances in Geographic Information Systems, ACM, 2019.
+      
+*** add sources for methods, particularly where we derived the proportional odds likelilhood/gradient from
 
