@@ -174,9 +174,14 @@ nc <- sf::st_read(system.file("gpkg/nc.gpkg", package="sf"), quiet = T)
 countyplot = ggplot() + 
   geom_sf(data=nc, fill = "white") +
   geom_point(data = data_complete, aes(x = Start_Lng, y = Start_Lat, label = Street), alpha = 0.1, color = "red") +
-  theme_bw()
+  theme_bw() +
+  labs(title = "NC Accidents over County Map", x = "Longitude", y = "Latitude")
 
-plotly::ggplotly(countyplot, tooltip = "label")
+countyplot
+
+ggsave("./report/countyplot.png")
+
+# plotly::ggplotly(countyplot, tooltip = "label")
 
 #======== exploring highway/interstate ===================================
 # # filter out known non-highway and highway labels and see what's left
@@ -199,10 +204,19 @@ interstateplot = ggplot() +
   geom_point(data = filter(data_complete, !str_detect(Street, "Interstate|I(\\s|-)") & str_detect(Description, "Interstate|I(\\s|-)")), 
              aes(x = Start_Lng, y = Start_Lat, label = Street, color = "Description"), alpha = 0.1) +
   scale_color_manual(name = "", values = c("Street" = "red", "Description" = "blue")) +
-  labs(title = "Interstate matches in Street vs. only in Description") +
+  labs(title = "Interstate matches in Street vs. only in Description",  x = "Longitude", y = "Latitude") +
   theme_bw()
 plotly::ggplotly(interstateplot, tooltip = "label")
 
+# plotting interstate matches in the same color
+ggplot() + 
+  geom_sf(data=nc, fill = "white") +
+  geom_point(data = filter(data_complete, interstate == T), 
+             aes(x = Start_Lng, y = Start_Lat), alpha = 0.1, color = "blue") +
+  labs(title = "NC Interstate Accidents over County Map", x = "Longitude", y = "Latitude") +
+  theme_bw()
+
+ggsave("./report/interstateplot.png")
 
 # # looking at severity for interstates vs. highways vs. other roads
 # data_roadtype = data_complete %>%
