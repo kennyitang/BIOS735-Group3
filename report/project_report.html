@@ -1692,13 +1692,8 @@ summary {
 </div>
 <div id="data" class="section level1">
 <h1>Data</h1>
-<p>The final dataset used contains 119,279 traffic accidents from North Carolina between the years 2016 and 2019. The original dataset had 49 total attributes, including attributes related to traffic, location, weather, points of interest, and period of day. For our purposes, we removed most location attributes (?? not done yet). We also chose to remove Wind Chill and Precipitation since they had around 60% missingess. Additionally, most of the points of interest variables had very low variability across observations, so we chose only to keep Crossing and Traffic Signal.</p>
+<p>The final dataset used contains 119,279 traffic accidents from North Carolina between the years 2016 and 2019. The original dataset had 49 total attributes, including attributes related to traffic, location, weather, points of interest, and period of day. For our purposes, we removed most location attributes due to various reasons. After aggregating the County variable into urban and rural factor levels, it was apparent that about 95% of the accident data was derived from urban areas. Therefore this information was not useful for prediction. We also chose to remove Wind Chill and Precipitation since they had around 60% missingess. Additionally, most of the points of interest variables had very low variability across observations, so we chose only to keep Crossing and Traffic Signal.</p>
 <p>In terms of traffic incidents, rows were removed that were missing all weather variables. Additionally, the data were split up into training data (pre-2019) and testing data (2019) as mentioned previously. The final training dataset has 75,887 observations and the testing has 43,392.</p>
-<pre class="r"><code>data_filtered &lt;- read.csv(&quot;../data/NC_Accidents_filtered.csv&quot;)
-data_training &lt;- read.csv(&quot;../data/NC_Accidents_trn.csv&quot;)
-data_testing &lt;- read.csv(&quot;../data/NC_Accidents_tst.csv&quot;)</code></pre>
-<p>Variables:<br />
-(YC: (i) would this be easier to read if we group by their role in the analysis(outcome/predictor candidates/dropped)? (ii)Do we start with the same set subset of variables for both proportional odds model and RF?)</p>
 <p>The Final Selection of Variables is as follows:</p>
 <div id="outcome" class="section level3">
 <h3>Outcome:</h3>
@@ -1713,35 +1708,13 @@ data_testing &lt;- read.csv(&quot;../data/NC_Accidents_tst.csv&quot;)</code></pr
 <p>*Note, my comments on the variables will be removed once we finalize the filtered dataset</p>
 <p><strong>Location/Time</strong></p>
 <ol style="list-style-type: decimal">
-<li>Source: categorical, API that reported accident (MapQuest, Bing, MapQuest-Bing) – remove?<br />
-</li>
-<li>Start Time – start time of the accident. keep the hour and minute of the day? aggregate?, keep month?<br />
-</li>
-<li>End Time – end time of accident remove?</li>
-<li>Start Lat – remove?<br />
-</li>
-<li>Start Lng – remove?<br />
-</li>
-<li>Description: in Natural Language, description of the accident – remove for now?<br />
-</li>
-<li>Street: character, street name – remove?<br />
-</li>
+<li>Source: categorical, API that reported accident (MapQuest, Bing, MapQuest-Bing)</li>
 <li>Side: categorical, side of street (Left/Right)<br />
-</li>
-<li>City – remove for now? or aggregate rural/urban? (YC: then we need some way to distinguish between rural/urban)<br />
-</li>
-<li>County – remove for now? or aggregate rural/urban?<br />
-</li>
-<li>Zipcode – remove<br />
-</li>
-<li>Airport Code – remove (86 levels)<br />
 </li>
 <li>Sunrise_Sunset: categorical (Day/Night)</li>
 </ol>
 <p><strong>Weather</strong></p>
-<ol start="14" style="list-style-type: decimal">
-<li>Weather Timestamp – remove<br />
-</li>
+<ol start="4" style="list-style-type: decimal">
 <li>Temperature: numeric, degrees Fahrenheit<br />
 </li>
 <li>Humidity: numeric, percentage<br />
@@ -1750,13 +1723,12 @@ data_testing &lt;- read.csv(&quot;../data/NC_Accidents_tst.csv&quot;)</code></pr
 </li>
 <li>Visibility: numeric, in miles<br />
 </li>
-<li>Wind Direction — aggregate CALM vs NOT CALM?<br />
-</li>
+<li>Wind Direction — aggregate CALM vs NOT CALM? (not using right now)</li>
 <li>Wind Speed: numeric, in mph</li>
-<li>Weather Condition – aggregate? (53 factors)</li>
+<li>Weather Condition – aggregate? (53 factors) (not using right now)</li>
 </ol>
 <p><strong>Points of Interest</strong></p>
-<ol start="22" style="list-style-type: decimal">
+<ol start="11" style="list-style-type: decimal">
 <li>Crossing: TRUE/FALSE, presence of a crossing nearby<br />
 </li>
 <li>Traffic_Signal: TRUE/FALSE, presence of a traffic signal nearby</li>
@@ -1765,28 +1737,39 @@ data_testing &lt;- read.csv(&quot;../data/NC_Accidents_tst.csv&quot;)</code></pr
 </div>
 <div id="methods" class="section level1">
 <h1>Methods</h1>
-<p>First, we apply a proportional odds model with the severity of an accident as the outcome, and start time ,&lt;—insert list of candidate variables—&gt;, as predictors. Based on paramter estimates of this model &lt;—potentially with penalization—&gt;, we identify variables that are most associated with severirty. In parallel, &lt;–starting with the same set of variables?–&gt;we use random forest to find the predictors that best yields the best classification.</p>
+<p>First, we apply a proportional odds model with the severity of an accident as the outcome, and start time ,&lt;—insert list of candidate variables—&gt;, as predictors. Based on paramter estimates of this model &lt;—potentially with penalization—&gt;, we identify variables that are most associated with severity. In parallel, starting with the same set of variables, we use random forest to find the predictors and build a model that best yields the best classification.</p>
 <div id="proportional-odds-model" class="section level2">
 <h2>Proportional Odds Model</h2>
-<p>For a single severity outcome <span class="math inline">\(Y_i\)</span> with covariates <span class="math inline">\(X_i\)</span>, the proportional odds model suggests that <span class="math display">\[ logit(P(Y_i\leq k))=log(\frac{P(Y_i\leq k)}{1-P(Y_i\leq k)}) = \alpha_k - x_i^T\beta\]</span> , where <span class="math inline">\(\beta = (\beta_1,...,\beta_p)^T\)</span>, <span class="math inline">\(x_i = (x_{i1},..., x_{ip})^T\)</span>, k=1, 2, and 3,.</p>
-<p>Equivalently, if we define <span class="math display">\[\phi(t) = \frac{1}{1+exp(-t)}\]</span> , then <span class="math display">\[P(Y_i\leq k) = \frac{1}{1 + exp(x_i^T\beta-\alpha_k)} = \phi(\alpha_k-x_i^T\beta)\]</span></p>
-<p>.The log likelihood function for n accidents is therefore given by <span class="math display">\[l(\alpha, \beta) = \sum_{i=1}^n\sum_{k=1}^4I(Y_i=k)log(P(Y_i=k))\\
+<p>For a single severity outcome <span class="math inline">\(Y_i\)</span> with covariates <span class="math inline">\(X_i\)</span>, the proportional odds model suggests that <span class="math display">\[ logit(P(Y_i\leq k))=log(\frac{P(Y_i\leq k)}{1-P(Y_i\leq k)}) = \alpha_k - x_i^T\beta\]</span> , where <span class="math inline">\(\beta = (\beta_1,...,\beta_p)^T\)</span>, <span class="math inline">\(x_i = (x_{i1},..., x_{ip})^T\)</span>, k=1, 2, and 3.</p>
+<p><br></p>
+<p>Equivalently, if we define <span class="math inline">\(\phi(t) = \frac{1}{1+exp(-t)}\)</span>, then <span class="math display">\[P(Y_i\leq k) = \frac{1}{1 + exp(x_i^T\beta-\alpha_k)} = \phi(\alpha_k-x_i^T\beta)\]</span>.</p>
+<p><br></p>
+<p>If we define <span class="math inline">\(\alpha = (\alpha_1,\alpha_2, \alpha_3)^T\)</span>, then log likelihood function for n accidents is therefore given by <span class="math display">\[l(\alpha, \beta) = \sum_{i=1}^n\sum_{k=1}^4I(Y_i=k)log(P(Y_i=k))\\
 =\sum_{i=1}^n \{I(Y_i=1)log(P(Yi\le1))+ I(Y_i=2)[log(P(Yi\le2)-P(Y_i\le1)] + I(Y_i=3)[log(P(Yi\le3)-P(Y_i\le2)] + I(Y_i=4)[log(1-P(Y_i\le3)]\}\\
-=\sum_{i=1}^n\{I(Y_i=1)log(\phi(\alpha1-x_i^T\beta))+ I(Y_i=2)log(\phi(\alpha2-x_i^T\beta)-\phi(\alpha1-x_i^T\beta))+ I(Y_i=3)log(\phi(\alpha3-x_i^T\beta) -\phi(\alpha2-x_i^T\beta))+ I(Y_i=4)log(1-\phi(\alpha3-x_i^T\beta))\}\]</span><br />
-, where <span class="math inline">\(\alpha = (\alpha_1,\alpha_2, \alpha_3)^T.\)</span></p>
+=\sum_{i=1}^n\{I(Y_i=1)log(\phi(\alpha1-x_i^T\beta))+ I(Y_i=2)log(\phi(\alpha2-x_i^T\beta)-\phi(\alpha1-x_i^T\beta))+ I(Y_i=3)log(\phi(\alpha3-x_i^T\beta) -\phi(\alpha2-x_i^T\beta))+ I(Y_i=4)log(1-\phi(\alpha3-x_i^T\beta))\}\]</span>.</p>
+<p><br> <br></p>
 <p>The gradient is <span class="math inline">\((\frac{\partial l(\alpha, \beta)}{\partial \beta_1}, ..., \frac{\partial l(\alpha, \beta)}{\partial \beta_p}, \frac{\partial l(\alpha, \beta)}{\partial \alpha_1},..., \frac{\partial l(\alpha, \beta)}{\partial \alpha_3})^T\)</span>, and the individual elements are given below.</p>
+<p><br></p>
 <p><span class="math display">\[\frac{\partial l(\alpha, \beta)}{\partial \beta_j}
 = \sum_{i=1}^n\left(-I(Y_i=1)\frac{exp(x_i^T\beta-\alpha_1)}{1+exp(x_i^T\beta-\alpha_1)}x_{ij} + I(Y_i=2)\frac{\frac{exp(x_i^T\beta-\alpha_1)}{[1+exp(x_i^T\beta-\alpha_1)]^2}-\frac{exp(x_i^T\beta-\alpha_2)}{[1+exp(x_i^T\beta-\alpha_2)]^2}}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)}x_{ij} + I(Y_i=3)\frac{\frac{exp(x_i^T\beta-\alpha_2)}{[1+exp(x_i^T\beta-\alpha_2)]^2}-\frac{exp(x_i^T\beta-\alpha_3)}{[1+exp(x_i^T\beta-\alpha_3)]^2}}{\phi(\alpha_3-x_i^T\beta)-\phi(\alpha_2-x_i^T\beta)}x_{ij} + I(Y_i=4)\frac{x_{ij}}{1+exp(x_i^T\beta-\alpha_3)}\right)\\
-=\sum_{i=1}^n\left(-I(Y_i=1)(1-\phi(\alpha_1-x_i^T\beta)) + I(Y_i=2)\frac{\phi(\alpha_1-x_i^T\beta)[1-\phi(\alpha_1-x_i^T\beta)]-\phi(\alpha_2-x_i^T\beta)[1-\phi(\alpha_2-x_i^T\beta)]}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)} + I(Y_i=3)\frac{\phi(\alpha_2-x_i^T\beta)[1-\phi(\alpha_2-x_i^T\beta)]-\phi(\alpha_3-x_i^T\beta)[1-\phi(\alpha_3-x_i^T\beta)]}{\phi(\alpha_3-x_i^T\beta)-\phi(\alpha_2-x_i^T\beta)} + I(Y_i=4)\phi(\alpha_3-x_i^T\beta)\right)x_{ij}\]</span></p>
-<p><span class="math display">\[ \frac{\partial l(\alpha, \beta)}{\partial \alpha_1} = \sum_{i=1}^n \left( I(Y_i=1)\frac{exp(x_i^T\beta-\alpha_1)}{1+exp(x_i^T\beta-\alpha_1)}-I(Y_i=2)\frac{\frac{exp(x_i^T\beta-\alpha_1)}{[1+exp(x_i^T\beta-\alpha_1)]^2}}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)} \right)=\sum_{i=1}^n\left( I(Y_i=1)[1-\phi(\alpha_1-x_i^T\beta)] - I(Y_i=2)\frac{\phi(\alpha_1-x_i^T\beta)[1-\phi(\alpha_1-x_i^T\beta)]}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)} \right)\]</span></p>
-<p><span class="math display">\[ \frac{\partial l(\alpha, \beta)}{\partial \alpha_2} = \sum_{i=1}^n \left( I(Y_i=2)\frac{\frac{exp(x_i^T\beta-\alpha_2)}{[1+exp(x_i^T\beta-\alpha_2)]^2}}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)}-I(Y_i=3)\frac{\frac{exp(x_i^T\beta-\alpha_2)}{[1+exp(x_i^T\beta-\alpha_2)]^2}}{\phi(\alpha_3-x_i^T\beta)-\phi(\alpha_2-x_i^T\beta)} \right)=\sum_{i=1}^n\left( I(Y_i=2)\frac{\phi(\alpha_2-x_i^T\beta)[1-\phi(\alpha_2-x_i^T\beta)]}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)} - I(Y_i=3)\frac{\phi(\alpha_2-x_i^T\beta)[1-\phi(\alpha_2-x_i^T\beta)]}{\phi(\alpha_3-x_i^T\beta)-\phi(\alpha_2-x_i^T\beta)} \right)\]</span></p>
-<p><span class="math display">\[ \frac{\partial l(\alpha, \beta)}{\partial \alpha_3} = \sum_{i=1}^n \left( I(Y_i=3)\frac{\frac{exp(x_i^T\beta-\alpha_3)}{[1+exp(x_i^T\beta-\alpha_3)]^2}}{\phi(\alpha_3-x_i^T\beta)-\phi(\alpha_2-x_i^T\beta)}-I(Y_i=4)\frac{\frac{exp(x_i^T\beta-\alpha_3)}{[1+exp(x_i^T\beta-\alpha_3)]^2}}{1-\phi(\alpha_3-x_i^T\beta)} \right)=\sum_{i=1}^n\left( I(Y_i=3)\frac{\phi(\alpha_3-x_i^T\beta)[1-\phi(\alpha_3-x_i^T\beta)]}{\phi(\alpha_3-x_i^T\beta)-\phi(\alpha_2-x_i^T\beta)} - I(Y_i=4)\frac{\phi(\alpha_3-x_i^T\beta)[1-\phi(\alpha_3-x_i^T\beta)]}{1-\phi(\alpha_3-x_i^T\beta)} \right)\]</span></p>
+=\sum_{i=1}^n\left(-I(Y_i=1)(1-\phi(\alpha_1-x_i^T\beta)) + I(Y_i=2)\frac{\phi(\alpha_1-x_i^T\beta)[1-\phi(\alpha_1-x_i^T\beta)]-\phi(\alpha_2-x_i^T\beta)[1-\phi(\alpha_2-x_i^T\beta)]}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)} + I(Y_i=3)\frac{\phi(\alpha_2-x_i^T\beta)[1-\phi(\alpha_2-x_i^T\beta)]-\phi(\alpha_3-x_i^T\beta)[1-\phi(\alpha_3-x_i^T\beta)]}{\phi(\alpha_3-x_i^T\beta)-\phi(\alpha_2-x_i^T\beta)} + I(Y_i=4)\phi(\alpha_3-x_i^T\beta)\right)x_{ij}\]</span><br />
+ </p>
+<p><span class="math display">\[ \frac{\partial l(\alpha, \beta)}{\partial \alpha_1} = \sum_{i=1}^n \left( I(Y_i=1)\frac{exp(x_i^T\beta-\alpha_1)}{1+exp(x_i^T\beta-\alpha_1)}-I(Y_i=2)\frac{\frac{exp(x_i^T\beta-\alpha_1)}{[1+exp(x_i^T\beta-\alpha_1)]^2}}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)} \right)\\
+=\sum_{i=1}^n\left( I(Y_i=1)[1-\phi(\alpha_1-x_i^T\beta)] - I(Y_i=2)\frac{\phi(\alpha_1-x_i^T\beta)[1-\phi(\alpha_1-x_i^T\beta)]}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)} \right)\]</span><br />
+ </p>
+<p><span class="math display">\[ \frac{\partial l(\alpha, \beta)}{\partial \alpha_2} = \sum_{i=1}^n \left( I(Y_i=2)\frac{\frac{exp(x_i^T\beta-\alpha_2)}{[1+exp(x_i^T\beta-\alpha_2)]^2}}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)}-I(Y_i=3)\frac{\frac{exp(x_i^T\beta-\alpha_2)}{[1+exp(x_i^T\beta-\alpha_2)]^2}}{\phi(\alpha_3-x_i^T\beta)-\phi(\alpha_2-x_i^T\beta)} \right)\\
+=\sum_{i=1}^n\left( I(Y_i=2)\frac{\phi(\alpha_2-x_i^T\beta)[1-\phi(\alpha_2-x_i^T\beta)]}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)} - I(Y_i=3)\frac{\phi(\alpha_2-x_i^T\beta)[1-\phi(\alpha_2-x_i^T\beta)]}{\phi(\alpha_3-x_i^T\beta)-\phi(\alpha_2-x_i^T\beta)} \right)\]</span><br />
+ </p>
+<p><span class="math display">\[ \frac{\partial l(\alpha, \beta)}{\partial \alpha_3} = \sum_{i=1}^n \left( I(Y_i=3)\frac{\frac{exp(x_i^T\beta-\alpha_3)}{[1+exp(x_i^T\beta-\alpha_3)]^2}}{\phi(\alpha_3-x_i^T\beta)-\phi(\alpha_2-x_i^T\beta)}-I(Y_i=4)\frac{\frac{exp(x_i^T\beta-\alpha_3)}{[1+exp(x_i^T\beta-\alpha_3)]^2}}{1-\phi(\alpha_3-x_i^T\beta)} \right)\\=\sum_{i=1}^n\left( I(Y_i=3)\frac{\phi(\alpha_3-x_i^T\beta)[1-\phi(\alpha_3-x_i^T\beta)]}{\phi(\alpha_3-x_i^T\beta)-\phi(\alpha_2-x_i^T\beta)} - I(Y_i=4)\frac{\phi(\alpha_3-x_i^T\beta)[1-\phi(\alpha_3-x_i^T\beta)]}{1-\phi(\alpha_3-x_i^T\beta)} \right)\]</span></p>
 </div>
 <div id="random-forest" class="section level2">
 <h2>Random Forest</h2>
+<p>Secondly, we implement the random forest method directly from the <code>caret</code> package in R for a comparison to the proportional odds model. We use 5-fold Cross Validation on the training data to build the model. Additionally, a tuning grid is used to tune the parameter <code>mtry</code>, which defines the number of variables randomly collected to be sampled at each split time. The tuning grid used explored <code>mtry</code> values between <span class="math inline">\(1\)</span> and <span class="math inline">\(3\)</span>.</p>
 </div>
 <div id="evaluation-and-comparison-of-models" class="section level2">
 <h2>Evaluation and Comparison of Models</h2>
+<p>One way to evaluate the performance of our methods is to test the accuracy of the models on the test set. To do this, a function is created that takes the fraction of the correctly classified observations divided by the total number of observations in the test set.</p>
+<p>Another method to evaluate categorical models is to use Cohen’s Kappa, which scales the accuracy to account for the predictions that are correct by guessing.</p>
 </div>
 </div>
 <div id="results" class="section level1">
@@ -1812,6 +1795,7 @@ data_testing &lt;- read.csv(&quot;../data/NC_Accidents_tst.csv&quot;)</code></pr
 <p>Source of data: <a href="https://www.kaggle.com/sobhanmoosavi/us-accidents" class="uri">https://www.kaggle.com/sobhanmoosavi/us-accidents</a></p>
 <p>[1] Moosavi, Sobhan, Mohammad Hossein Samavatian, Srinivasan Parthasarathy, and Rajiv Ramnath. “A Countrywide Traffic Accident Dataset.”, 2019.</p>
 <p>[2] Moosavi, Sobhan, Mohammad Hossein Samavatian, Srinivasan Parthasarathy, Radu Teodorescu, and Rajiv Ramnath. “Accident Risk Prediction based on Heterogeneous Sparse Data: New Dataset and Insights.” In proceedings of the 27th ACM SIGSPATIAL International Conference on Advances in Geographic Information Systems, ACM, 2019.</p>
+<p>*** add sources for methods, particularly where we derived the proportional odds likelilhood/gradient from</p>
 </div>
 
 
