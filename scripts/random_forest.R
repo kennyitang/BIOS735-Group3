@@ -51,7 +51,7 @@ start = Sys.time()
 rf_mod_red = train(
   Severity_c ~ Source + Side + `Temperature(F)` + `Humidity(%)` + `Pressure(in)` + 
                `Visibility(mi)` + `Wind_Speed(mph)` + Crossing + Traffic_Signal +
-               Sunrise_Sunset, 
+               Sunrise_Sunset + weekday + interstate, 
   data = trn_data, 
   method = "rf",
   trControl = cv_5,
@@ -69,4 +69,53 @@ calc_acc(actual = tst_data$Severity_c, predicted = predict(rf_mod_red, newdata =
 
 # Confusion Matrix, has a lot of metrics including Kappa
 confusionMatrix(predict(rf_mod_red, newdata = tst_data), tst_data$Severity_c)
+
+
+
+########################################## RF for time_diff 
+# performs very poorly 
+
+trn_data$time_diff_c = as.factor(trn_data$time_diff)
+tst_data$time_diff_c = as.factor(tst_data$time_diff)
+
+#Variable names
+names(trn_data)
+
+
+#5-fold cross-validation
+cv_5 = trainControl(method = "cv", number = 5)
+#Tuning parameter
+rf_grid = expand.grid(mtry = 1:3)
+
+
+#Random forest
+
+set.seed(3)
+start = Sys.time()
+rf_mod_red_timediff = train(
+  time_diff_c ~ Source + Side + `Temperature(F)` + `Humidity(%)` + `Pressure(in)` + 
+    `Visibility(mi)` + `Wind_Speed(mph)` + Crossing + Traffic_Signal +
+    Sunrise_Sunset + weekday + interstate, 
+  data = trn_data, 
+  method = "rf",
+  trControl = cv_5,
+  tuneGrid = rf_grid
+)
+end = Sys.time()
+print(end - start)
+
+rf_mod_red_timediff$results
+rf_mod_red_timediff$bestTune
+varImp(rf_mod_red_timediff)
+varImpPlot(rf_mod_red$finalModel)
+#Obtain test accuracy
+calc_acc(actual = tst_data$time_diff_c, 
+         predicted = predict(rf_mod_red_timediff, newdata = tst_data))
+
+# Confusion Matrix, has a lot of metrics including Kappa
+confusionMatrix(predict(rf_mod_red_timediff, newdata = tst_data), tst_data$time_diff_c)
+
+
+
+
 
