@@ -188,20 +188,34 @@ plotly::ggplotly(countyplot, tooltip = "label")
 # # create T/F variable for highway
 # data_complete$highway = str_detect(data_complete$Street, "Hwy|Pkwy|Highway|Expy|Expressway|Fwy|Interstate|I(-|\\s)\\d|NC(-|\\s)|US(-|\\s)(\\d|H)")
 
+# create T/F variable for interstate
+data_complete$interstate = str_detect(data_complete$Street, "Interstate|I(-|\\s)\\d") | str_detect(data_complete$Description, "Interstate|I(-|\\s)\\d")
+
 # plotting interstate matches
-g = ggplot() + 
+interstateplot = ggplot() + 
   geom_sf(data=nc, fill = "white") +
-  geom_point(data = filter(data_complete, interstate == T), 
+  geom_point(data = filter(data_complete, str_detect(Street, "Interstate|I(\\s|-)")), 
              aes(x = Start_Lng, y = Start_Lat, label = Street, color = "Street"), alpha = 0.1) +
-  geom_point(data = filter(data_complete, interstate == F & str_detect(Description, "Interstate|I(\\s|-)")), 
+  geom_point(data = filter(data_complete, !str_detect(Street, "Interstate|I(\\s|-)") & str_detect(Description, "Interstate|I(\\s|-)")), 
              aes(x = Start_Lng, y = Start_Lat, label = Street, color = "Description"), alpha = 0.1) +
   scale_color_manual(name = "", values = c("Street" = "red", "Description" = "blue")) +
   labs(title = "Interstate matches in Street vs. only in Description") +
   theme_bw()
-plotly::ggplotly(g, tooltip = "label")
+plotly::ggplotly(interstateplot, tooltip = "label")
 
-# create T/F variable for interstate
-data_complete$interstate = str_detect(data_complete$Street, "Interstate|I(-|\\s)\\d") | str_detect(data_complete$Description, "Interstate|I(-|\\s)\\d")
+
+# # looking at severity for interstates vs. highways vs. other roads
+# data_roadtype = data_complete %>%
+#   mutate(road_type = case_when(
+#     interstate ==T ~ "interstate",
+#     interstate ==F & highway ==T ~ "highway",
+#     interstate ==F & highway ==F ~ "other"
+#   ))
+# 
+# ggplot(data_roadtype) +
+#   geom_bar(aes(x = Severity, fill = road_type), position = "dodge") +
+#   theme_bw()
+
 
 
 #======== Write data sets to CSV ======================================
