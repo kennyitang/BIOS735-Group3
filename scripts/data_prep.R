@@ -1,5 +1,6 @@
 
 # all packages
+library(tidyverse)
 library(readr)
 library(knitr)
 library(kableExtra)
@@ -10,6 +11,7 @@ library(glmnet)
 library(e1071)
 library(broom)
 library(data.table)
+library(dplyr)
 
 #' ---
 #' title: "BIOS 735 Final Project: Car Accident Severity - Data Preparation Module"
@@ -23,7 +25,7 @@ library(data.table)
 data = fread("./Data/NC_Accidents.csv")
 str(data)
 
-#Use variable Weather_Timestamp to determine year of data
+#======== Use variable Weather_Timestamp to determine year of data =============
 #Parsing character to Datetime variable
 data$Weather_Timestamp_n = as.POSIXct(data$Weather_Timestamp, format = "%Y-%m-%d %H:%M:%OS")
 data$year = lubridate::year(data$Weather_Timestamp_n)   #Year of observation recorded
@@ -35,7 +37,7 @@ data_filter = data[!is.na(Weather_Timestamp_n),]  #Remove obs. missing all weath
 
 names(data_filter)
 
-# Weather variables:
+#======== Weather variables: ==============================================
 #"Temperature.F." "Wind_Chill.F." "Humidity..." "Pressure.in." "Visibility.mi." "Wind_Direction" "Wind_Speed.mph." 
 #"Precipitation.in." "Weather_Condition"
 
@@ -47,7 +49,7 @@ colSums(apply(data_filter[, .(`Temperature(F)`, `Wind_Chill(F)`, `Humidity(%)`,
   nrow(data_filter)
 
 
-#Wind Chill and Precipitation have around 60% missingness
+#======= Wind Chill and Precipitation have around 60% missingness ===========
 
   #What should we do with them? Drop them: 
   #   Windchill is the function of temperature and wind speed
@@ -62,13 +64,13 @@ var(data_filter[!is.na(`Precipitation(in)`), `Precipitation(in)`])
 data_filter[, c("Wind_Chill(F)", "Precipitation(in)") := NULL]
 dim(data_filter)
 
-
+#======= Weather_Condition and Wind_Direction =============================
 #Weather_Condition: too many categories  How do we want to recategorize them? ignore for now
 table(data_filter$Weather_Condition) %>% as.matrix() / nrow(data_filter) * 100
 #Wind_Direction: too many categories  How do we want to recategorize them? ignore for now
 table(data_filter$Wind_Direction) %>% as.matrix() / nrow(data_filter) * 100
 
-
+#========= Binary Variables =====================================================
 #Checking variability in binary variables:
 #Amenity, Bump,	Crossing,	Give_Way,	Junction,	No_Exit, Railway, Roundabout, Station, Stop, 
 #Traffic_Calming, Traffic_Signal, Turning_Loop
@@ -83,10 +85,9 @@ data_filter[, c("Amenity", "Bump",	"Give_Way",	"Junction",	"No_Exit", "Railway",
                 "Roundabout", "Station", "Stop", "Traffic_Calming", "Turning_Loop") := NULL]
 dim(data_filter)
 
-
+#========= Dropping other variables =====================================
 #Checking missingness in the rest of the variables
 colSums(apply(data_filter, MARGIN = 2, is.na))
-
 
 #Drop End_Lat (119596 missing), End_Lng (119596 missing) and
 #TMC and Number (not useful infos) and
@@ -107,7 +108,7 @@ data_filter[, `Distance(mi)` := NULL]
 #Check Sunrise_Sunset: 3 missing
 table(data_filter$Sunrise_Sunset)
 
-#Include only complete cases
+#=========== Include only complete cases =========================
 data_complete = data_filter[rowSums(is.na(data_filter)) == 0, ] 
 data_complete = data_complete[Sunrise_Sunset != "",]     #remove 3 obs with Sunrise_Sunset == ""
 
@@ -121,7 +122,7 @@ str(data_complete)
 
 
 
-#Finally, check outcome variable: Severity
+#========= Finally, check outcome variable: Severity ===================
 table(data_complete$Severity)  #Only 24 cases have severity 1 (least severe accident)
 
   #combine Severity 1 with Severity 2, and adjust scale to 1-3
@@ -129,7 +130,7 @@ data_complete[Severity == 1, Severity := 2]
 data_complete[, Severity := Severity-1]
 table(data_complete$Severity)
 
-#
+#=========== county ===============================
 # #attempt to aggregate county -- 95% urban 
 # urban <- c("Alamance", "Buncombe", "Craven", "Cabarrus", "Dare",
 #            "Cumberland", "Durham", "Gaston", "Guilford", "Mecklenburg", 
@@ -146,11 +147,12 @@ table(data_complete$Severity)
 
 
 
-#Another possible outcome to predict: Duration of car accidents management (that causes traffic congestion).
+#===== Another possible outcome to predict: Duration of car accidents management (that causes traffic congestion). ==============
 
 data_complete$Start_Time= as.POSIXct(data_complete$Start_Time, format = "%Y-%m-%d %H:%M:%OS")
 data_complete$End_Time= as.POSIXct(data_complete$End_Time, format = "%Y-%m-%d %H:%M:%OS")
-data_complete$time_diff <- difftime(data_complete$End_Time,data_complete$Start_Time) %>% as.numeric()
+data_complete$time_diff <- difftime(data_complete$End_Time,data_complete$Start_Time) %>% as.numeric() # time_diff in minutes
+# data_complete$time_diff_days <-  difftime(data_complete$End_Time,data_complete$Start_Time, units = "days") %>% as.numeric()  # time_diff in days
 ggplot(data_complete, aes(time_diff)) + geom_histogram(binwidth = 1) + xlim(0,100) + 
   geom_vline(xintercept = c(37,53,85), col = "red")
 
@@ -162,6 +164,47 @@ data_complete$time_diff <- data_complete$time_diff %>% as.factor()
 summary(data_complete$time_diff)
 
 
+
+#======= add weekday variable based on Start_Time =================
+data_complete$weekday = lubridate::wday(data_complete$Start_Time) %in% 2:6
+
+#======== mapping accidents over NC counties =========================
+nc <- sf::st_read(system.file("gpkg/nc.gpkg", package="sf"), quiet = T)
+
+countyplot = ggplot() + 
+  geom_sf(data=nc, fill = "white") +
+  geom_point(data = data_complete, aes(x = Start_Lng, y = Start_Lat, label = Street), alpha = 0.1, color = "red") +
+  theme_bw()
+
+plotly::ggplotly(countyplot, tooltip = "label")
+
+#======== exploring highway/interstate ===================================
+# # filter out known non-highway and highway labels and see what's left
+# data_street = data_complete %>%
+#   filter(!str_detect(Street, "Rd|Ave|Blvd|St|Dr|Ln|Cir|Pl|Ct|Way|Ter|Trl|Run|Loop|Peakway|Walk|Xing|Ext|Park")) %>%
+#   filter(!str_detect(Street, "Hwy|Pkwy|Highway|Expy|Expressway|Fwy|Interstate|I(-|\\s)\\d|NC(-|\\s)|US(-|\\s)(\\d|H)")) 
+# # seems like the rest are non-highway
+# table(data_street$Street)
+# # create T/F variable for highway
+# data_complete$highway = str_detect(data_complete$Street, "Hwy|Pkwy|Highway|Expy|Expressway|Fwy|Interstate|I(-|\\s)\\d|NC(-|\\s)|US(-|\\s)(\\d|H)")
+
+# plotting interstate matches
+g = ggplot() + 
+  geom_sf(data=nc, fill = "white") +
+  geom_point(data = filter(data_complete, interstate == T), 
+             aes(x = Start_Lng, y = Start_Lat, label = Street, color = "Street"), alpha = 0.1) +
+  geom_point(data = filter(data_complete, interstate == F & str_detect(Description, "Interstate|I(\\s|-)")), 
+             aes(x = Start_Lng, y = Start_Lat, label = Street, color = "Description"), alpha = 0.1) +
+  scale_color_manual(name = "", values = c("Street" = "red", "Description" = "blue")) +
+  labs(title = "Interstate matches in Street vs. only in Description") +
+  theme_bw()
+plotly::ggplotly(g, tooltip = "label")
+
+# create T/F variable for interstate
+data_complete$interstate = str_detect(data_complete$Street, "Interstate|I(-|\\s)\\d") | str_detect(data_complete$Description, "Interstate|I(-|\\s)\\d")
+
+
+#======== Write data sets to CSV ======================================
 
 #Use data from Years before 2019 as traning data set, and Data from 2019 as testing data set
 
