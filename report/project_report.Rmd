@@ -97,7 +97,7 @@ For a single severity outcome $Y_i$ with covariates $X_i$, the proportional odds
       &\qquad\qquad\qquad &\qquad\qquad\qquad &\qquad\qquad\qquad &\qquad\qquad\qquad &\qquad\qquad\qquad &\qquad\qquad\qquad &\qquad\qquad
     \end{aligned}
   }
-\], where \(\beta = (\beta_1,...,\beta_p)^T, x_i = (x_{i1},..., x_{ip})^T,\) and \(k= 1, 2, 3\).
+\], where \(\beta = (\beta_1,...,\beta_p)^T, x_i = (x_{i1},..., x_{ip})^T,\) and \(k= 1, 2\).
 
 <br>
 
@@ -111,13 +111,13 @@ P(Y_i\leq k) = \frac{1}{1 + exp(x_i^T\beta-\alpha_k)} = \phi(\alpha_k-x_i^T\beta
   }  
 \]
 
-If we define $\alpha = (\alpha_1,\alpha_2, \alpha_3)^T$, then log likelihood function for n accidents is therefore given by 
+If we define $\alpha = (\alpha_1,\alpha_2)^T$, then log likelihood function for n accidents is therefore given by 
 \[
   {\displaystyle
     \begin{aligned}
-l(\alpha, \beta)&= \sum_{i=1}^n\sum_{k=1}^4I(Y_i=k)log(P(Y_i=k))\\
-                &=\sum_{i=1}^n \{I(Y_i=1)log(P(Yi\le1))+ I(Y_i=2)[log(P(Yi\le2)-P(Y_i\le1)] + I(Y_i=3)[log(P(Yi\le3)-P(Y_i\le2)] + I(Y_i=4)[log(1-P(Y_i\le3)]\}\\
-                &=\sum_{i=1}^n\{I(Y_i=1)log(\phi(\alpha1-x_i^T\beta))+ I(Y_i=2)log(\phi(\alpha2-x_i^T\beta)-\phi(\alpha1-x_i^T\beta))+ I(Y_i=3)log(\phi(\alpha3-x_i^T\beta) -\phi(\alpha2-x_i^T\beta))+ I(Y_i=4)log(1-\phi(\alpha3-x_i^T\beta))\}
+l(\alpha, \beta)&= \sum_{i=1}^n\sum_{k=1}^3I(Y_i=k)log(P(Y_i=k))\\
+                &=\sum_{i=1}^n \{I(Y_i=1)log(P(Yi\le1))+ I(Y_i=2)[log(P(Yi\le2)-P(Y_i\le1)] + I(Y_i=3)[log(1-P(Y_i\le2)]\}\\
+                &=\sum_{i=1}^n\{I(Y_i=1)log(\phi(\alpha1-x_i^T\beta))+ I(Y_i=2)log(\phi(\alpha2-x_i^T\beta)-\phi(\alpha1-x_i^T\beta))+  I(Y_i=3)log(1-\phi(\alpha2-x_i^T\beta))\}
     \end{aligned}
   }
 \].  
@@ -126,7 +126,7 @@ The gradient is
 \[
   {\displaystyle
     \begin{aligned}
-(\frac{\partial l(\alpha, \beta)}{\partial \beta_1}, ..., \frac{\partial l(\alpha, \beta)}{\partial \beta_p}, \frac{\partial l(\alpha, \beta)}{\partial \alpha_1},..., \frac{\partial l(\alpha, \beta)}{\partial \alpha_3})^T&\\
+(\frac{\partial l(\alpha, \beta)}{\partial \beta_1}, ..., \frac{\partial l(\alpha, \beta)}{\partial \beta_p}, \frac{\partial l(\alpha, \beta)}{\partial \alpha_1}, \frac{\partial l(\alpha, \beta)}{\partial \alpha_2})^T&\\
                                    & \qquad\qquad\qquad &\qquad\qquad\qquad &\qquad\qquad\qquad & 
     \end{aligned}
   }
@@ -139,13 +139,22 @@ The gradient is
 \[
   {\displaystyle
     \begin{aligned}
-\frac{\partial l(\alpha, \beta)}{\partial \beta_j}
-&= \sum_{i=1}^n\left(-I(Y_i=1)\frac{exp(x_i^T\beta-\alpha_1)}{1+exp(x_i^T\beta-\alpha_1)}x_{ij} + I(Y_i=2)\frac{\frac{exp(x_i^T\beta-\alpha_1)}{[1+exp(x_i^T\beta-\alpha_1)]^2}-\frac{exp(x_i^T\beta-\alpha_2)}{[1+exp(x_i^T\beta-\alpha_2)]^2}}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)}x_{ij} + I(Y_i=3)\frac{\frac{exp(x_i^T\beta-\alpha_2)}{[1+exp(x_i^T\beta-\alpha_2)]^2}-\frac{exp(x_i^T\beta-\alpha_3)}{[1+exp(x_i^T\beta-\alpha_3)]^2}}{\phi(\alpha_3-x_i^T\beta)-\phi(\alpha_2-x_i^T\beta)}x_{ij} + I(Y_i=4)\frac{x_{ij}}{1+exp(x_i^T\beta-\alpha_3)}\right)\\
-&=\sum_{i=1}^n\left(-I(Y_i=1)(1-\phi(\alpha_1-x_i^T\beta)) + I(Y_i=2)\frac{\phi(\alpha_1-x_i^T\beta)[1-\phi(\alpha_1-x_i^T\beta)]-\phi(\alpha_2-x_i^T\beta)[1-\phi(\alpha_2-x_i^T\beta)]}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)} + I(Y_i=3)\frac{\phi(\alpha_2-x_i^T\beta)[1-\phi(\alpha_2-x_i^T\beta)]-\phi(\alpha_3-x_i^T\beta)[1-\phi(\alpha_3-x_i^T\beta)]}{\phi(\alpha_3-x_i^T\beta)-\phi(\alpha_2-x_i^T\beta)} + I(Y_i=4)\phi(\alpha_3-x_i^T\beta)\right)x_{ij}\\
-\\
-\frac{\partial l(\alpha, \beta)}{\partial \alpha_1} &= \sum_{i=1}^n \left( I(Y_i=1)\frac{exp(x_i^T\beta-\alpha_1)}{1+exp(x_i^T\beta-\alpha_1)}-I(Y_i=2)\frac{\frac{exp(x_i^T\beta-\alpha_1)}{[1+exp(x_i^T\beta-\alpha_1)]^2}}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)} \right)\\
-&=\sum_{i=1}^n\left( I(Y_i=1)[1-\phi(\alpha_1-x_i^T\beta)] - I(Y_i=2)\frac{\phi(\alpha_1-x_i^T\beta)[1-\phi(\alpha_1-x_i^T\beta)]}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)} \right)\\
-\\
+        \frac{\partial l(\alpha, \beta)}{\partial \beta_j}
+          &= \sum_{i=1}^n\left(-I(Y_i=1)\frac{exp(x_i^T\beta-\alpha_1)}{1+exp(x_i^T\beta-\alpha_1)}x_{ij}
+            + I(Y_i=2)\frac{\frac{exp(x_i^T\beta-\alpha_1)}{[1+exp(x_i^T\beta-\alpha_1)]^2}-
+                \frac{exp(x_i^T\beta-\alpha_2)}{[1+exp(x_i^T\beta-\alpha_2)]^2}}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)}x_{ij} 
+            + I(Y_i=3)\frac{x_{ij}}{1+exp(x_i^T\beta-\alpha_2)}\right)
+          \\&=\sum_{i=1}^n\left(-I(Y_i=1)(1-\phi(\alpha_1-x_i^T\beta)) 
+            + I(Y_i=2)\frac{\phi(\alpha_1-x_i^T\beta)[1-\phi(\alpha_1-x_i^T\beta)]
+              -\phi(\alpha_2-x_i^T\beta)[1-\phi(\alpha_2-x_i^T\beta)]}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)} 
+            +I(Y_i=3)\phi(\alpha_2-x_i^T\beta)\right)x_{ij}\\
+        \\
+        \frac{\partial l(\alpha, \beta)}{\partial \alpha_1} 
+        &= \sum_{i=1}^n \left(I(Y_i=1)\frac{exp(x_i^T\beta-\alpha_1)}{1+exp(x_i^T\beta-\alpha_1)}
+          -I(Y_i=2)\frac{\frac{exp(x_i^T\beta-\alpha_1)}{[1+exp(x_i^T\beta-\alpha_1)]^2}}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)} \right)\\
+        &=\sum_{i=1}^n\left( I(Y_i=1)[1-\phi(\alpha_1-x_i^T\beta)]
+          - I(Y_i=2)\frac{\phi(\alpha_1-x_i^T\beta)[1-\phi(\alpha_1-x_i^T\beta)]}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)} \right)\\
+        \\
      \end{aligned}
   }
 \]
@@ -153,11 +162,12 @@ The gradient is
 \[
   {\displaystyle
     \begin{aligned}
-\frac{\partial l(\alpha, \beta)}{\partial \alpha_2} &= \sum_{i=1}^n \left( I(Y_i=2)\frac{\frac{exp(x_i^T\beta-\alpha_2)}{[1+exp(x_i^T\beta-\alpha_2)]^2}}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)}-I(Y_i=3)\frac{\frac{exp(x_i^T\beta-\alpha_2)}{[1+exp(x_i^T\beta-\alpha_2)]^2}}{\phi(\alpha_3-x_i^T\beta)-\phi(\alpha_2-x_i^T\beta)} \right)\\
-&=\sum_{i=1}^n\left( I(Y_i=2)\frac{\phi(\alpha_2-x_i^T\beta)[1-\phi(\alpha_2-x_i^T\beta)]}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)} - I(Y_i=3)\frac{\phi(\alpha_2-x_i^T\beta)[1-\phi(\alpha_2-x_i^T\beta)]}{\phi(\alpha_3-x_i^T\beta)-\phi(\alpha_2-x_i^T\beta)} \right)\\
-\\    
-\frac{\partial l(\alpha, \beta)}{\partial \alpha_3} &= \sum_{i=1}^n \left( I(Y_i=3)\frac{\frac{exp(x_i^T\beta-\alpha_3)}{[1+exp(x_i^T\beta-\alpha_3)]^2}}{\phi(\alpha_3-x_i^T\beta)-\phi(\alpha_2-x_i^T\beta)}-I(Y_i=4)\frac{\frac{exp(x_i^T\beta-\alpha_3)}{[1+exp(x_i^T\beta-\alpha_3)]^2}}{1-\phi(\alpha_3-x_i^T\beta)} \right)\\                       
-&=\sum_{i=1}^n\left( I(Y_i=3)\frac{\phi(\alpha_3-x_i^T\beta)[1-\phi(\alpha_3-x_i^T\beta)]}{\phi(\alpha_3-x_i^T\beta)-\phi(\alpha_2-x_i^T\beta)} - I(Y_i=4)\frac{\phi(\alpha_3-x_i^T\beta)[1-\phi(\alpha_3-x_i^T\beta)]}{1-\phi(\alpha_3-x_i^T\beta)} \right)      \qquad\qquad\qquad\qquad
+        \frac{\partial l(\alpha, \beta)}{\partial \alpha_2} &= \sum_{i=1}^n \left(
+            I(Y_i=2)\frac{\frac{exp(x_i^T\beta-\alpha_2)}{[1+exp(x_i^T\beta-\alpha_2)]^2}}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)}
+            -I(Y_i=3)\frac{\frac{exp(x_i^T\beta-\alpha_2)}{[1+exp(x_i^T\beta-\alpha_2)]^2}}{1-\phi(\alpha_2-x_i^T\beta)} \right)
+            \\                       
+            &=\sum_{i=1}^n\left( I(Y_i=2)\frac{\phi(\alpha_2-x_i^T\beta)[1-\phi(\alpha_2-x_i^T\beta)]}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)}
+            - I(Y_i=3)\frac{\phi(\alpha_2-x_i^T\beta)[1-\phi(\alpha_2-x_i^T\beta)]}{1-\phi(\alpha_2-x_i^T\beta)} \right)      \qquad\qquad\qquad\qquad
   \end{aligned}
   }
 \]   
@@ -174,7 +184,10 @@ Another method to evaluate categorical models is to use Cohen's Kappa, which sca
 
 # Results 
 
-## Proportional Odds Model 
+## Proportional Odds Model
+
+
+
 
 ## Random Forest
 
