@@ -109,13 +109,21 @@ print(end - start)
 rf_mod_red_timediff$results
 rf_mod_red_timediff$bestTune
 varImp(rf_mod_red_timediff)
-varImpPlot(rf_mod_red$finalModel)
+
 #Obtain test accuracy
 calc_acc(actual = tst_data$time_diff_c, 
          predicted = predict(rf_mod_red_timediff, newdata = tst_data))
 
 # Confusion Matrix, has a lot of metrics including Kappa
 confusionMatrix(predict(rf_mod_red_timediff, newdata = tst_data), tst_data$time_diff_c)
+
+# ggplot(trn_data, aes(time_diff)) + 
+#   geom_histogram(binwidth = 1) + xlim(0,100) 
+# 
+# ggplot(tst_data, aes(time_diff)) + 
+#   geom_histogram(binwidth = 1) + xlim(0,100)
+
+
 
 ######################## ordinalForest
 

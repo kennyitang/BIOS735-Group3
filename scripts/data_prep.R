@@ -173,6 +173,8 @@ data_complete$Start_Time= as.POSIXct(data_complete$Start_Time, format = "%Y-%m-%
 data_complete$End_Time= as.POSIXct(data_complete$End_Time, format = "%Y-%m-%d %H:%M:%OS")
 data_complete$time_diff <- difftime(data_complete$End_Time,data_complete$Start_Time) %>% as.numeric() # time_diff in minutes
 # data_complete$time_diff_days <-  difftime(data_complete$End_Time,data_complete$Start_Time, units = "days") %>% as.numeric()  # time_diff in days
+
+#Clear divisions in the time differences
 ggplot(data_complete, aes(time_diff)) + geom_histogram(binwidth = 1) + xlim(0,100) + 
   geom_vline(xintercept = c(37,53,85), col = "red")
 
