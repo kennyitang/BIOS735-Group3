@@ -15,13 +15,13 @@ library(tidyverse)
 
 # Introduction 
 
-Sitting in traffic is not ideal for anyone, and it is especially frustrating when the traffic is caused by an accident. It is an unexpected delay, and many times it is completely uncertain how long the delay will last. Traffic accident data can be an invaluble resource, as it can provide information that can potentially aid in predicting conditions where accidents are prone to happen so steps can be taken to prevent the accident. Further, this data could be useful in predicting how severely an accident will delay the following drivers after the accident happens so steps can be taken to reduce this delay as needed. 
+Sitting in traffic is not ideal for anyone, and it is especially frustrating when the traffic is caused by an accident. It is an unexpected delay, and many times it is completely uncertain how long the delay will last. Moreso, traffic accidents pose a big problem for public safety. Traffic accident data can be an invaluble resource, as it can provide information that can potentially aid in predicting conditions where accidents are prone to happen so steps can be taken to prevent the accident. Further, this data could be useful in predicting how severely an accident will delay the drivers following the accident so steps can be taken to reduce this delay as needed. 
 
 Several computer scientists from the Ohio State University present exactly this: a dataset of traffic accidents from the contiguous United States, covering 2.95 million accidents with data collected between February 2016 and December 2019. As of March 2019, of the 49 states included, North Carolina had the fourth highest number of accidents in the dataset at 109,000 [1]. Because of the wide range of attributes collected with each accident in the dataset, this has the potential to provide the information needed to start making decisions about how to prevent accidents and the delays associated.
 
 # Project Aim 
 
-The aim of this project is to use Car Accident Data from North Carolina in 2016-2018 to determine which factors have the most influence on the severity of car accidents in the state. We take two different approaches to construct models to predict the severity of car accidents, one through proportional oddes model and one through machine learning. We then use the 2019 data to evaluate and compare the performance of our prediction models.
+The aim of this project is to use Car Accident Data from North Carolina in 2016-2018 to determine which factors have the most influence on the severity of car accidents in the state. We take two different approaches to construct models to predict the severity of car accidents, one through proportional odds model and one through machine learning. We then use the 2019 data to evaluate and compare the performance of our prediction models.
 
 # R-Package
 
@@ -45,7 +45,7 @@ Our R package `group3project` contains the functions needed to fit a proportiona
 
 # Data
 
-The final dataset used contains 119,279 traffic accidents from North Carolina between the years 2016 and 2019. The original dataset had 49 total attributes, including attributes related to traffic, location, weather, points of interest, and period of day. For our purposes, we removed most location attributes due to various reasons. After aggregating the County variable into urban and rural factor levels, it was apparent that about 95% of the accident data was derived from urban areas. Therefore this information was not useful for prediction. We also chose to remove Wind Chill and Precipitation since they had around 60% missingess. Additionally, most of the points of interest variables had very low variability across observations, so we chose only to keep Crossing and Traffic Signal.
+The final dataset used contains 119,279 traffic accidents from North Carolina between the years 2016 and 2019. The original dataset had 49 total attributes, including attributes related to location, weather, points of interest, and period of day. For our purposes, we removed most location attributes due to various reasons. After aggregating the County variable into urban and rural factor levels, it was apparent that about 95% of the accident data was derived from urban areas. Therefore this information was not useful for prediction. We also chose to remove Wind Chill and Precipitation since they had around 60% missingess. Additionally, most of the points of interest variables had very low variability across observations, so we chose only to keep Crossing and Traffic Signal.
 
 In terms of traffic incidents, rows were removed that were missing all weather variables. Additionally, the data were split up into training data (pre-2019) and testing data (2019) as mentioned previously. The final training dataset has 75,887 observations and the testing has 43,392.
 
@@ -66,22 +66,24 @@ It should be noted that the dataset sources are rather vague on the definition a
 
 1. Source: categorical, API that reported accident (MapQuest, Bing, MapQuest-Bing)
 2. Side: categorical, side of street (Left/Right)  
-3. Sunrise_Sunset: categorical (Day/Night)  
+3. Sunrise_Sunset: categorical (Day/Night)
+4. Weekday: TRUE/FALSE, if accident started on a weekday 
+5. Interstate: TRUE/FALSE, if accident happened on an interstate
   
 **Weather**  
 
-4. Temperature: numeric, degrees Fahrenheit    
-5. Humidity: numeric, percentage  
-6. Pressure: numeric air pressure, in inches  
-7. Visibility: numeric, in miles  
-8. Wind Direction --- aggregate CALM vs NOT CALM?  (not using right now)
-9. Wind Speed: numeric, in mph 
-10. Weather Condition -- aggregate? (53 factors)  (not using right now)
+6. Temperature: numeric, degrees Fahrenheit    
+7. Humidity: numeric, percentage  
+8. Pressure: numeric air pressure, in inches  
+9. Visibility: numeric, in miles  
+10. Wind Direction --- aggregate CALM vs NOT CALM?  (not using right now)
+11. Wind Speed: numeric, in mph 
+12. Weather Condition -- aggregate? (53 factors)  (not using right now)
   
 **Points of Interest**  
 
-11. Crossing: TRUE/FALSE, presence of a crossing nearby  
-12. Traffic_Signal: TRUE/FALSE, presence of a traffic signal nearby  
+13. Crossing: TRUE/FALSE, presence of a crossing nearby  
+14. Traffic_Signal: TRUE/FALSE, presence of a traffic signal nearby  
 
 # Methods 
 First, we apply a proportional odds model with the severity of an accident as the outcome, and start time ,<---insert list of candidate variables--->, as predictors. Based on paramter estimates of this model <---potentially with penalization--->, we identify variables that are most associated with severity. In parallel, starting with the same set of variables, we use random forest to find the predictors and build a model that best yields the best classification.  
@@ -163,6 +165,8 @@ The gradient is
   
 ## Random Forest
 Secondly, we implement the random forest method directly from the `caret` package in R for a comparison to the proportional odds model.  We use 5-fold Cross Validation on the training data to build the model. Additionally, a tuning grid is used to tune the parameter `mtry`, which defines the number of variables randomly collected to be sampled at each split time. The tuning grid used explored `mtry` values between $1$ and $3$. 
+
+*** add ordinal or replace with ordinal 
 
 ## Evaluation and Comparison of Models
 One way to evaluate the performance of our methods is to test the accuracy of the models on the test set. To do this, a function is created that takes the fraction of the correctly classified observations divided by the total number of observations in the test set. 

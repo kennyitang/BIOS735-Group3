@@ -115,7 +115,20 @@ calc_acc(actual = tst_data$time_diff_c,
 # Confusion Matrix, has a lot of metrics including Kappa
 confusionMatrix(predict(rf_mod_red_timediff, newdata = tst_data), tst_data$time_diff_c)
 
+######################## ordinalForest
 
+# install.packages("ordinalForest")
+library(ordinalForest)
 
-
-
+trn_data$Severity_c <- trn_data$Severity_c %>% ordered()
+tst_data$Severity_c <- tst_data$Severity_c %>% ordered()
+datatrain = trn_data %>% select(Source, Side, `Temperature(F)`, `Humidity(%)`, `Pressure(in)`,
+                                `Visibility(mi)`, `Wind_Speed(mph)`, Crossing, Traffic_Signal,
+                                 Sunrise_Sunset, weekday, interstate, Severity_c)
+datatest = tst_data %>% select(Source, Side, `Temperature(F)`, `Humidity(%)`, `Pressure(in)`,
+                                `Visibility(mi)`, `Wind_Speed(mph)`, Crossing, Traffic_Signal,
+                                Sunrise_Sunset, weekday, interstate, Severity_c)
+ordforest <- ordfor(depvar = "Severity_c", data = datatrain)
+sort(ordforest$varimp, decreasing = TRUE)
+preds <- predict(ordforest, newdata = datatest)
+confusionMatrix(preds$ypred, datatest$Severity_c)
