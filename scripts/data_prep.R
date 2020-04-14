@@ -145,6 +145,26 @@ table(data_complete$Severity)
 # #data_complete$County[data_complete$County %in% suburban] <- "Suburban"
 # data_complete$County <- data_complete$County %>% as.factor()
 
+# # #attempt to aggregate weather 
+# clear <- c("Fair", "Mostly Cloudy", "Clear", "Cloudy", "Partly Cloudy", "Overcast",
+# "Scattered Clouds")
+# fog <- c("Fog", "Haze", "Patches of Fog", "Shallow Fog", "Smoke")
+# precip <- c("Light Rain", "Light Rain / Windy", "Heavy Rain", "Light Drizzle",
+# "Drizzle", "T-Storm", "Light Freezing Rain / Windy", "Rain / Windy", "Thunder",
+# "Heavy Rain / Windy", "Light Snow", "Thunderstorms and Rain", "Light Thunderstorms and Rain",
+# "Light Freezing Drizzle", "N/A Precipitation", "Heavy Snow", "Heavy Freezing Rain",
+# "Heavy Thunderstorms and Rain", "Light Freezing Rain", "Ice Pellets", "Thunderstorm",
+# "Light Ice Pellets", "Mist", "Rain", "Heavy Drizzle", "Wintry Mix", "Heavy T-Storm",
+# "Heavy T-Storm / Windy", "Light Rain with Thunder", "Thunder in the Vicinity", "Thunder / Windy",
+# "T-Storm / Windy", "Snow", "Light Rain Showers", "Blowing Snow")
+# wind <- c("Mostly Cloudy / Windy", "Cloudy / Windy", "Fair / Windy", "Partly Cloudy / Windy")
+# data_complete$Weather_Condition[(data_complete$Weather_Condition %in% c(fog))] <- "Fog"
+# data_complete$Weather_Condition[(data_complete$Weather_Condition %in% c(precip))] <- "Precipitation"
+# data_complete$Weather_Condition[(data_complete$Weather_Condition %in% c(clear))] <- "Clear"
+# data_complete$Weather_Condition[(data_complete$Weather_Condition %in% c(wind))] <- "Wind"
+# data_complete$Weather_Condition <- data_complete$Weather_Condition %>% as.factor()
+# data_complete = data_complete[Weather_Condition != "",]  
+# table(data_complete$Severity, data_complete$Weather_Condition)
 
 
 #===== Another possible outcome to predict: Duration of car accidents management (that causes traffic congestion). ==============
@@ -162,8 +182,6 @@ data_complete$time_diff[data_complete$time_diff > 53 & data_complete$time_diff<=
 data_complete$time_diff[data_complete$time_diff > 85 ] <- 4
 data_complete$time_diff <- data_complete$time_diff %>% as.factor()
 summary(data_complete$time_diff)
-
-
 
 #======= add weekday variable based on Start_Time =================
 data_complete$weekday = lubridate::wday(data_complete$Start_Time) %in% 2:6
@@ -245,3 +263,7 @@ nrow(data_complete) == nrow(train_data) + nrow(test_data)   #Checking number of 
 fwrite(data_complete, "./Data/NC_Accidents_filtered.csv")
 fwrite(train_data, "./Data/NC_Accidents_trn.csv")
 fwrite(test_data, "./Data/NC_Accidents_tst.csv")
+
+
+
+

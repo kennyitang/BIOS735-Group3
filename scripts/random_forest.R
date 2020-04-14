@@ -46,6 +46,8 @@ rf_grid = expand.grid(mtry = 1:3)
 
 #Random forest
 
+table(trn.data$Severity.c)
+
 set.seed(3)
 start = Sys.time()
 rf_mod_red = train(
@@ -139,5 +141,61 @@ preds <- predict(ordforest, newdata = datatest)
 confusionMatrix(preds$ypred, datatest$Severity_c)
 postResample(preds$ypred, datatest$Severity_c)
 # save(ordforest, file = "ordforest.RData")
+
+
+
+############ Random forest Downsampling
+
+set.seed(12984)
+downsample.trn <- trn_data[c(which(trn_data$Severity_c == 3),
+                             sample(which(trn_data$Severity_c == 2), 1081), 
+                             sample(which(trn_data$Severity_c == 1), 1081)),]
+
+set.seed(3)
+start = Sys.time()
+rf_mod_red = train(
+  Severity_c ~ Source + Side + `Temperature(F)` + `Humidity(%)` + `Pressure(in)` + 
+    `Visibility(mi)` + `Wind_Speed(mph)` + Crossing + Traffic_Signal +
+    Sunrise_Sunset + weekday + interstate, 
+  data = downsample.trn, 
+  method = "rf",
+  trControl = cv_5,
+  tuneGrid = rf_grid
+)
+end = Sys.time()
+print(end - start)
+
+rf_mod_red$results
+rf_mod_red$bestTune
+varImp(rf_mod_red)
+varImpPlot(rf_mod_red$finalModel)
+#Obtain test accuracy
+calc_acc(actual = tst_data$Severity_c, predicted = predict(rf_mod_red, newdata = tst_data))
+
+# Confusion Matrix, has a lot of metrics including Kappa
+confusionMatrix(predict(rf_mod_red, newdata = tst_data), tst_data$Severity_c)
+
+
+############ Ordinal forest Downsampling
+
+
+downsample.trn$Severity_c <- downsample.trn$Severity_c %>% ordered()
+tst_data$Severity_c <- tst_data$Severity_c %>% ordered()
+datatrain = downsample.trn %>% select(Source, Side, `Temperature(F)`, `Humidity(%)`, `Pressure(in)`,
+                                `Visibility(mi)`, `Wind_Speed(mph)`, Crossing, Traffic_Signal,
+                                Sunrise_Sunset, weekday, interstate, Severity_c)
+datatest = tst_data %>% select(Source, Side, `Temperature(F)`, `Humidity(%)`, `Pressure(in)`,
+                               `Visibility(mi)`, `Wind_Speed(mph)`, Crossing, Traffic_Signal,
+                               Sunrise_Sunset, weekday, interstate, Severity_c)
+
+set.seed(13847)
+start = Sys.time()
+ordforest <- ordfor(depvar = "Severity_c", data = datatrain)
+sort(ordforest$varimp, decreasing = TRUE)
+end = Sys.time()
+print(end - start)
+preds <- predict(ordforest, newdata = datatest)
+confusionMatrix(preds$ypred, datatest$Severity_c)
+postResample(preds$ypred, datatest$Severity_c)
 
 

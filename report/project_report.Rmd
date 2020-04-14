@@ -75,14 +75,13 @@ It should be noted that the dataset sources are rather vague on the definition a
 7. Humidity: numeric, percentage  
 8. Pressure: numeric air pressure, in inches  
 9. Visibility: numeric, in miles  
-10. Wind Direction --- aggregate CALM vs NOT CALM?  (not using right now)
-11. Wind Speed: numeric, in mph 
-12. Weather Condition -- aggregate? (53 factors)  (not using right now)
+10. Wind Speed: numeric, in mph 
+11. Weather Condition -- aggregate? (53 factors)  (not using right now)
   
 **Points of Interest**  
 
-13. Crossing: TRUE/FALSE, presence of a crossing nearby  
-14. Traffic_Signal: TRUE/FALSE, presence of a traffic signal nearby  
+12. Crossing: TRUE/FALSE, presence of a crossing nearby for pedestrians, cyclists, etc. 
+13. Traffic_Signal: TRUE/FALSE, presence of a traffic signal nearby on an intersection 
 
 # Methods 
 First, we apply a proportional odds model with severity of an accident as the outcome, and predictors listed in the previous section as covariates. Based on paramter estimates of this model <---potentially with penalization--->, we identify variables that are most associated with severity. In parallel, starting with the same set of variables, we use random forest to find the predictors and build a model that yields the best classification.  
@@ -176,6 +175,8 @@ The gradient is
 Secondly, we implement the random forest method directly from the `caret` package in R for a comparison to the proportional odds model.  We use 5-fold Cross Validation on the training data to build the model. Additionally, a tuning grid is used to tune the parameter `mtry`, which defines the number of variables randomly collected to be sampled at each split time. The tuning grid used explored `mtry` values between $1$ and $3$. 
 
 It should be noted however, that the typical random forest classifier does not account for the fact that the classes are ordinal (i.e. class 1 is "closer" to class 2 than class 3). Therefore, it is of interest to explore a machine learning algorithm that can account for this. The R package `ordinalForest` does just that. We use the model with default hyperparameters on our data and compare to the traditional random forest and the proportional odds model.
+
+Downsampling?
 
 ## Evaluation and Comparison of Models
 One way to evaluate the performance of our methods is to test the accuracy of the models on the test set. To do this, the fraction of the correctly classified observations is divided by the total number of observations in the test set. 
