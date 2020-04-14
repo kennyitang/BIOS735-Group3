@@ -1692,16 +1692,16 @@ summary {
 </div>
 <div id="data" class="section level1">
 <h1>Data</h1>
-<p>The final dataset used contains 119,279 traffic accidents from North Carolina between the years 2016 and 2019. The original dataset had 49 total attributes, including attributes related to traffic, location, weather, points of interest, and period of day. For our purposes, we removed most location attributes due to various reasons. After aggregating the County variable into urban and rural factor levels, it was apparent that about 95% of the accident data was derived from urban areas. Therefore this information was not useful for prediction. We also chose to remove Wind Chill and Precipitation since they had around 60% missingess. Additionally, most of the points of interest variables had very low variability across observations, so we chose only to keep Crossing and Traffic Signal.</p>
-<p>In terms of traffic incidents, rows were removed that were missing all weather variables. Additionally, the data were split up into training data (pre-2019) and testing data (2019) as mentioned previously. The final training dataset has 75,887 observations and the testing has 43,392.</p>
-<p>The Final Selection of Variables is as follows:</p>
+<p>The original dataset had 49 total attributes, including attributes related to traffic, location, weather, points of interest, and period of day. For our purposes, we removed most location attributes due to various reasons. After aggregating the County variable into urban and rural factor levels, it was apparent that about 95% of the accident data was derived from urban areas. Therefore this information was not useful for prediction. We also chose to remove Wind Chill and Precipitation since they had around 60% missingess. Additionally, most of the points of interest variables had very low variability across observations, so we chose to only keep Crossing and Traffic Signal.The analysis dataset contains 119,279 traffic accidents from North Carolina between the years 2016 and 2019.</p>
+<p>In terms of traffic incidents, rows missing all weather variables were removed. Additionally, the analysis data were split up into training data (pre-2019) and testing data (2019) as mentioned previously. The final training dataset has 75,887 observations and the testing has 43,392 observations.</p>
+<p>The variables selected for analysis are as follows:</p>
 <div id="outcome" class="section level3">
 <h3>Outcome:</h3>
 <ol style="list-style-type: decimal">
 <li>Severity: severity of the accident in terms of the impact on traffic, which is an integer from 1 to 3 with increasing impact. This is an ordinal variable and the outcome of interest.</li>
 </ol>
-<p>Additionally, the variable had four categories (1-4) but only 24 observations had severity of 1, so we combined severities 1 and 2 and readjusted the scale.</p>
-<p>It should be noted that the dataset sources are rather vague on the definition and derivation of this outcome variable. Length of delay caused by the accident is mentioned, and we assume that scope, such as how many lane closures there are, may also be taken into account when determining the severity.</p>
+<p>Originally this variable had four categories (1-4), but only 24 observations had severity of 1, so we combined severities 1 and 2 and readjusted the scale.</p>
+<p>It should be noted that the dataset sources are rather vague on the definition and derivation of this outcome variable. Length of delay caused by the accident is mentioned, and we assume that scope, such as how many lane closures there were, may also be taken into account when determining the severity.</p>
 </div>
 <div id="predictors" class="section level3">
 <h3>Predictors:</h3>
@@ -1737,7 +1737,7 @@ summary {
 </div>
 <div id="methods" class="section level1">
 <h1>Methods</h1>
-<p>First, we apply a proportional odds model with the severity of an accident as the outcome, and start time ,&lt;—insert list of candidate variables—&gt;, as predictors. Based on paramter estimates of this model &lt;—potentially with penalization—&gt;, we identify variables that are most associated with severity. In parallel, starting with the same set of variables, we use random forest to find the predictors and build a model that best yields the best classification.</p>
+<p>First, we apply a proportional odds model with severity of an accident as the outcome, and predictors listed in the previous section as covariates. Based on paramter estimates of this model &lt;—potentially with penalization—&gt;, we identify variables that are most associated with severity. In parallel, starting with the same set of variables, we use random forest to find the predictors and build a model that yields the best classification.</p>
 <div id="proportional-odds-model" class="section level2">
 <h2>Proportional Odds Model</h2>
 <p>For a single severity outcome <span class="math inline">\(Y_i\)</span> with covariates <span class="math inline">\(X_i\)</span>, the proportional odds model suggests that <span class="math display">\[
@@ -1747,7 +1747,7 @@ summary {
       &amp;\qquad\qquad\qquad &amp;\qquad\qquad\qquad &amp;\qquad\qquad\qquad &amp;\qquad\qquad\qquad &amp;\qquad\qquad\qquad &amp;\qquad\qquad\qquad &amp;\qquad\qquad
     \end{aligned}
   }
-\]</span>, where <span class="math inline">\(\beta = (\beta_1,...,\beta_p)^T, x_i = (x_{i1},..., x_{ip})^T,\)</span> and <span class="math inline">\(k= 1, 2, 3\)</span>.</p>
+\]</span>, where <span class="math inline">\(\beta = (\beta_1,...,\beta_p)^T, x_i = (x_{i1},..., x_{ip})^T,\)</span> and <span class="math inline">\(k= 1, 2\)</span>.</p>
 <p><br></p>
 <p>Equivalently, if we define <span class="math inline">\(\phi(t) = \frac{1}{1+exp(-t)}\)</span>, then <span class="math display">\[  
 {\displaystyle
@@ -1757,19 +1757,19 @@ P(Y_i\leq k) = \frac{1}{1 + exp(x_i^T\beta-\alpha_k)} = \phi(\alpha_k-x_i^T\beta
     \end{aligned}
   }  
 \]</span></p>
-<p>If we define <span class="math inline">\(\alpha = (\alpha_1,\alpha_2, \alpha_3)^T\)</span>, then log likelihood function for n accidents is therefore given by <span class="math display">\[
+<p>If we define <span class="math inline">\(\alpha = (\alpha_1,\alpha_2)^T\)</span>, then log likelihood function for n accidents is therefore given by <span class="math display">\[
   {\displaystyle
     \begin{aligned}
-l(\alpha, \beta)&amp;= \sum_{i=1}^n\sum_{k=1}^4I(Y_i=k)log(P(Y_i=k))\\
-                &amp;=\sum_{i=1}^n \{I(Y_i=1)log(P(Yi\le1))+ I(Y_i=2)[log(P(Yi\le2)-P(Y_i\le1)] + I(Y_i=3)[log(P(Yi\le3)-P(Y_i\le2)] + I(Y_i=4)[log(1-P(Y_i\le3)]\}\\
-                &amp;=\sum_{i=1}^n\{I(Y_i=1)log(\phi(\alpha1-x_i^T\beta))+ I(Y_i=2)log(\phi(\alpha2-x_i^T\beta)-\phi(\alpha1-x_i^T\beta))+ I(Y_i=3)log(\phi(\alpha3-x_i^T\beta) -\phi(\alpha2-x_i^T\beta))+ I(Y_i=4)log(1-\phi(\alpha3-x_i^T\beta))\}
+l(\alpha, \beta)&amp;= \sum_{i=1}^n\sum_{k=1}^3I(Y_i=k)log(P(Y_i=k))\\
+                &amp;=\sum_{i=1}^n \{I(Y_i=1)log(P(Yi\le1))+ I(Y_i=2)[log(P(Yi\le2)-P(Y_i\le1)] + I(Y_i=3)[log(1-P(Y_i\le2)]\}\\
+                &amp;=\sum_{i=1}^n\{I(Y_i=1)log(\phi(\alpha1-x_i^T\beta))+ I(Y_i=2)log(\phi(\alpha2-x_i^T\beta)-\phi(\alpha1-x_i^T\beta))+  I(Y_i=3)log(1-\phi(\alpha2-x_i^T\beta))\}
     \end{aligned}
   }
 \]</span>.</p>
 <p>The gradient is <span class="math display">\[
   {\displaystyle
     \begin{aligned}
-(\frac{\partial l(\alpha, \beta)}{\partial \beta_1}, ..., \frac{\partial l(\alpha, \beta)}{\partial \beta_p}, \frac{\partial l(\alpha, \beta)}{\partial \alpha_1},..., \frac{\partial l(\alpha, \beta)}{\partial \alpha_3})^T&amp;\\
+(\frac{\partial l(\alpha, \beta)}{\partial \beta_1}, ..., \frac{\partial l(\alpha, \beta)}{\partial \beta_p}, \frac{\partial l(\alpha, \beta)}{\partial \alpha_1}, \frac{\partial l(\alpha, \beta)}{\partial \alpha_2})^T&amp;\\
                                    &amp; \qquad\qquad\qquad &amp;\qquad\qquad\qquad &amp;\qquad\qquad\qquad &amp; 
     \end{aligned}
   }
@@ -1779,24 +1779,34 @@ l(\alpha, \beta)&amp;= \sum_{i=1}^n\sum_{k=1}^4I(Y_i=k)log(P(Y_i=k))\\
 <p><span class="math display">\[
   {\displaystyle
     \begin{aligned}
-\frac{\partial l(\alpha, \beta)}{\partial \beta_j}
-&amp;= \sum_{i=1}^n\left(-I(Y_i=1)\frac{exp(x_i^T\beta-\alpha_1)}{1+exp(x_i^T\beta-\alpha_1)}x_{ij} + I(Y_i=2)\frac{\frac{exp(x_i^T\beta-\alpha_1)}{[1+exp(x_i^T\beta-\alpha_1)]^2}-\frac{exp(x_i^T\beta-\alpha_2)}{[1+exp(x_i^T\beta-\alpha_2)]^2}}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)}x_{ij} + I(Y_i=3)\frac{\frac{exp(x_i^T\beta-\alpha_2)}{[1+exp(x_i^T\beta-\alpha_2)]^2}-\frac{exp(x_i^T\beta-\alpha_3)}{[1+exp(x_i^T\beta-\alpha_3)]^2}}{\phi(\alpha_3-x_i^T\beta)-\phi(\alpha_2-x_i^T\beta)}x_{ij} + I(Y_i=4)\frac{x_{ij}}{1+exp(x_i^T\beta-\alpha_3)}\right)\\
-&amp;=\sum_{i=1}^n\left(-I(Y_i=1)(1-\phi(\alpha_1-x_i^T\beta)) + I(Y_i=2)\frac{\phi(\alpha_1-x_i^T\beta)[1-\phi(\alpha_1-x_i^T\beta)]-\phi(\alpha_2-x_i^T\beta)[1-\phi(\alpha_2-x_i^T\beta)]}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)} + I(Y_i=3)\frac{\phi(\alpha_2-x_i^T\beta)[1-\phi(\alpha_2-x_i^T\beta)]-\phi(\alpha_3-x_i^T\beta)[1-\phi(\alpha_3-x_i^T\beta)]}{\phi(\alpha_3-x_i^T\beta)-\phi(\alpha_2-x_i^T\beta)} + I(Y_i=4)\phi(\alpha_3-x_i^T\beta)\right)x_{ij}\\
-\\
-\frac{\partial l(\alpha, \beta)}{\partial \alpha_1} &amp;= \sum_{i=1}^n \left( I(Y_i=1)\frac{exp(x_i^T\beta-\alpha_1)}{1+exp(x_i^T\beta-\alpha_1)}-I(Y_i=2)\frac{\frac{exp(x_i^T\beta-\alpha_1)}{[1+exp(x_i^T\beta-\alpha_1)]^2}}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)} \right)\\
-&amp;=\sum_{i=1}^n\left( I(Y_i=1)[1-\phi(\alpha_1-x_i^T\beta)] - I(Y_i=2)\frac{\phi(\alpha_1-x_i^T\beta)[1-\phi(\alpha_1-x_i^T\beta)]}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)} \right)\\
-\\
+        \frac{\partial l(\alpha, \beta)}{\partial \beta_j}
+          &amp;= \sum_{i=1}^n\left(-I(Y_i=1)\frac{exp(x_i^T\beta-\alpha_1)}{1+exp(x_i^T\beta-\alpha_1)}x_{ij}
+            + I(Y_i=2)\frac{\frac{exp(x_i^T\beta-\alpha_1)}{[1+exp(x_i^T\beta-\alpha_1)]^2}-
+                \frac{exp(x_i^T\beta-\alpha_2)}{[1+exp(x_i^T\beta-\alpha_2)]^2}}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)}x_{ij} 
+            + I(Y_i=3)\frac{x_{ij}}{1+exp(x_i^T\beta-\alpha_2)}\right)
+          \\&amp;=\sum_{i=1}^n\left(-I(Y_i=1)(1-\phi(\alpha_1-x_i^T\beta)) 
+            + I(Y_i=2)\frac{\phi(\alpha_1-x_i^T\beta)[1-\phi(\alpha_1-x_i^T\beta)]
+              -\phi(\alpha_2-x_i^T\beta)[1-\phi(\alpha_2-x_i^T\beta)]}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)} 
+            +I(Y_i=3)\phi(\alpha_2-x_i^T\beta)\right)x_{ij}\\
+        \\
+        \frac{\partial l(\alpha, \beta)}{\partial \alpha_1} 
+        &amp;= \sum_{i=1}^n \left(I(Y_i=1)\frac{exp(x_i^T\beta-\alpha_1)}{1+exp(x_i^T\beta-\alpha_1)}
+          -I(Y_i=2)\frac{\frac{exp(x_i^T\beta-\alpha_1)}{[1+exp(x_i^T\beta-\alpha_1)]^2}}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)} \right)\\
+        &amp;=\sum_{i=1}^n\left( I(Y_i=1)[1-\phi(\alpha_1-x_i^T\beta)]
+          - I(Y_i=2)\frac{\phi(\alpha_1-x_i^T\beta)[1-\phi(\alpha_1-x_i^T\beta)]}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)} \right)\\
+        \\
      \end{aligned}
   }
 \]</span></p>
 <p><span class="math display">\[
   {\displaystyle
     \begin{aligned}
-\frac{\partial l(\alpha, \beta)}{\partial \alpha_2} &amp;= \sum_{i=1}^n \left( I(Y_i=2)\frac{\frac{exp(x_i^T\beta-\alpha_2)}{[1+exp(x_i^T\beta-\alpha_2)]^2}}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)}-I(Y_i=3)\frac{\frac{exp(x_i^T\beta-\alpha_2)}{[1+exp(x_i^T\beta-\alpha_2)]^2}}{\phi(\alpha_3-x_i^T\beta)-\phi(\alpha_2-x_i^T\beta)} \right)\\
-&amp;=\sum_{i=1}^n\left( I(Y_i=2)\frac{\phi(\alpha_2-x_i^T\beta)[1-\phi(\alpha_2-x_i^T\beta)]}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)} - I(Y_i=3)\frac{\phi(\alpha_2-x_i^T\beta)[1-\phi(\alpha_2-x_i^T\beta)]}{\phi(\alpha_3-x_i^T\beta)-\phi(\alpha_2-x_i^T\beta)} \right)\\
-\\    
-\frac{\partial l(\alpha, \beta)}{\partial \alpha_3} &amp;= \sum_{i=1}^n \left( I(Y_i=3)\frac{\frac{exp(x_i^T\beta-\alpha_3)}{[1+exp(x_i^T\beta-\alpha_3)]^2}}{\phi(\alpha_3-x_i^T\beta)-\phi(\alpha_2-x_i^T\beta)}-I(Y_i=4)\frac{\frac{exp(x_i^T\beta-\alpha_3)}{[1+exp(x_i^T\beta-\alpha_3)]^2}}{1-\phi(\alpha_3-x_i^T\beta)} \right)\\                       
-&amp;=\sum_{i=1}^n\left( I(Y_i=3)\frac{\phi(\alpha_3-x_i^T\beta)[1-\phi(\alpha_3-x_i^T\beta)]}{\phi(\alpha_3-x_i^T\beta)-\phi(\alpha_2-x_i^T\beta)} - I(Y_i=4)\frac{\phi(\alpha_3-x_i^T\beta)[1-\phi(\alpha_3-x_i^T\beta)]}{1-\phi(\alpha_3-x_i^T\beta)} \right)      \qquad\qquad\qquad\qquad
+        \frac{\partial l(\alpha, \beta)}{\partial \alpha_2} &amp;= \sum_{i=1}^n \left(
+            I(Y_i=2)\frac{\frac{exp(x_i^T\beta-\alpha_2)}{[1+exp(x_i^T\beta-\alpha_2)]^2}}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)}
+            -I(Y_i=3)\frac{\frac{exp(x_i^T\beta-\alpha_2)}{[1+exp(x_i^T\beta-\alpha_2)]^2}}{1-\phi(\alpha_2-x_i^T\beta)} \right)
+            \\                       
+            &amp;=\sum_{i=1}^n\left( I(Y_i=2)\frac{\phi(\alpha_2-x_i^T\beta)[1-\phi(\alpha_2-x_i^T\beta)]}{\phi(\alpha_2-x_i^T\beta)-\phi(\alpha_1-x_i^T\beta)}
+            - I(Y_i=3)\frac{\phi(\alpha_2-x_i^T\beta)[1-\phi(\alpha_2-x_i^T\beta)]}{1-\phi(\alpha_2-x_i^T\beta)} \right)      \qquad\qquad\qquad\qquad
   \end{aligned}
   }
 \]</span></p>
