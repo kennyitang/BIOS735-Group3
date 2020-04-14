@@ -44,12 +44,7 @@ Our R package `group3project` contains the functions needed to fit a proportiona
 ```
 
 # Data
-
-<<<<<<< HEAD
-The final dataset used contains 119,279 traffic accidents from North Carolina between the years 2016 and 2019. The original dataset had 49 total attributes, including attributes related to location, weather, points of interest, and period of day. For our purposes, we removed most location attributes due to various reasons. After aggregating the County variable into urban and rural factor levels, it was apparent that about 95% of the accident data was derived from urban areas. Therefore this information was not useful for prediction. We also chose to remove Wind Chill and Precipitation since they had around 60% missingess. Additionally, most of the points of interest variables had very low variability across observations, so we chose only to keep Crossing and Traffic Signal.
-=======
 The original dataset had 49 total attributes, including attributes related to traffic, location, weather, points of interest, and period of day.  For our purposes, we removed most location attributes due to various reasons. After aggregating the County variable into urban and rural factor levels, it was apparent that about 95% of the accident data was derived from urban areas. Therefore this information was not useful for prediction. We also chose to remove Wind Chill and Precipitation since they had around 60% missingess. Additionally, most of the points of interest variables had very low variability across observations, so we chose to only keep Crossing and Traffic Signal.The analysis dataset contains 119,279 traffic accidents from North Carolina between the years 2016 and 2019.
->>>>>>> 12e8dd42f1bee2068bcd9de2b27fc96b0396f30b
 
 In terms of traffic incidents, rows missing all weather variables were removed. Additionally, the analysis data were split up into training data (pre-2019) and testing data (2019) as mentioned previously. The final training dataset has 75,887 observations and the testing has 43,392 observations.
 
