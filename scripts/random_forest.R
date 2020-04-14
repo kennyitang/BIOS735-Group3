@@ -128,7 +128,16 @@ datatrain = trn_data %>% select(Source, Side, `Temperature(F)`, `Humidity(%)`, `
 datatest = tst_data %>% select(Source, Side, `Temperature(F)`, `Humidity(%)`, `Pressure(in)`,
                                 `Visibility(mi)`, `Wind_Speed(mph)`, Crossing, Traffic_Signal,
                                 Sunrise_Sunset, weekday, interstate, Severity_c)
+
+set.seed(13847)
+start = Sys.time()
 ordforest <- ordfor(depvar = "Severity_c", data = datatrain)
 sort(ordforest$varimp, decreasing = TRUE)
+end = Sys.time()
+print(end - start)
 preds <- predict(ordforest, newdata = datatest)
 confusionMatrix(preds$ypred, datatest$Severity_c)
+postResample(preds$ypred, datatest$Severity_c)
+# save(ordforest, file = "ordforest.RData")
+
+

@@ -1,6 +1,6 @@
 ---
 title: 'BIOS 735 Final Project: Car Accident Severity'
-author: "Marissa Ashner, Yen Chang, Marco Chen, Weifang Liu, Yi Tang, Joyce Yan"
+author: "Marissa Ashner, Yen Chang, Marco Chen, Yi Tang Chen, Weifang Liu, Joyce Yan"
 date: "4/23/2020"
 output:
   html_document:
@@ -175,12 +175,14 @@ The gradient is
 ## Random Forest
 Secondly, we implement the random forest method directly from the `caret` package in R for a comparison to the proportional odds model.  We use 5-fold Cross Validation on the training data to build the model. Additionally, a tuning grid is used to tune the parameter `mtry`, which defines the number of variables randomly collected to be sampled at each split time. The tuning grid used explored `mtry` values between $1$ and $3$. 
 
-*** add ordinal or replace with ordinal 
+It should be noted however, that the typical random forest classifier does not account for the fact that the classes are ordinal (i.e. class 1 is "closer" to class 2 than class 3). Therefore, it is of interest to explore a machine learning algorithm that can account for this. The R package `ordinalForest` does just that. We use the model with default hyperparameters on our data and compare to the traditional random forest and the proportional odds model.
 
 ## Evaluation and Comparison of Models
-One way to evaluate the performance of our methods is to test the accuracy of the models on the test set. To do this, a function is created that takes the fraction of the correctly classified observations divided by the total number of observations in the test set. 
+One way to evaluate the performance of our methods is to test the accuracy of the models on the test set. To do this, the fraction of the correctly classified observations is divided by the total number of observations in the test set. 
 
 Another method to evaluate categorical models is to use Cohen's Kappa, which scales the accuracy to account for the predictions that are correct by guessing. 
+
+We can also compare the computational time it takes to build each model. This is important when working with large datasets. 
 
 # Results 
 
@@ -192,6 +194,8 @@ Another method to evaluate categorical models is to use Cohen's Kappa, which sca
 ## Random Forest
 
 ## Method Comparison 
+
+ordinalForest took about 1.5 hours. 
 
 # Discussion 
 
