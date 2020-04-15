@@ -12,8 +12,9 @@ if(!("group3project" %in% list.files())){
 
 setwd("group3project")
 # add a function in ./R/sample-functions.R before building
-build()
-document()  # creates NAMESPACE and ./man/ folder with roxygen files
+setwd("../")
+build("group3project")
+document("group3project")  # creates NAMESPACE and ./man/ folder with roxygen files
 load_all()
 
 # needs to be done in the group3project.Rproj:
@@ -22,6 +23,6 @@ load_all()
 
 library(testthat)
 library(group3project)
-load_all()
-test_file("tests/testthat/test-sample-functions.R")
+#load_all()
+test_file("group3project/tests/testthat/test-calc_acc.R")
 test_package("group3project") # run all tests in package
