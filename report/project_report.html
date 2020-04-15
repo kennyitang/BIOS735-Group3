@@ -1650,6 +1650,8 @@ summary {
 </ul></li>
 <li><a href="#methods">Methods</a><ul>
 <li><a href="#proportional-odds-model">Proportional Odds Model</a></li>
+<li><a href="#proportional-odds-model-with-penalty">Proportional Odds Model with Penalty</a></li>
+<li><a href="#variable-selection">Variable Selection</a></li>
 <li><a href="#random-forest">Random Forest</a></li>
 <li><a href="#evaluation-and-comparison-of-models">Evaluation and Comparison of Models</a></li>
 </ul></li>
@@ -1752,10 +1754,10 @@ library(grid)</code></pre>
 </div>
 <div id="methods" class="section level1">
 <h1>Methods</h1>
-<p>First, we apply a proportional odds model with severity of an accident as the outcome, and predictors listed in the previous section as covariates. Based on paramter estimates of this model &lt;—potentially with penalization—&gt;, we identify variables that are most associated with severity. In parallel, starting with the same set of variables, we use random forest to find the predictors and build a model that yields the best classification.</p>
+<p>We apply a proportional odds model with severity of an accident as the outcome, and predictors listed in the previous section as covariates. Based on paramter estimates of this model &lt;—potentially with penalization—&gt;, we identify variables that are most associated with severity. In parallel, starting with the same set of variables, we use random forest to find the predictors and build a model that yields the best classification.</p>
 <div id="proportional-odds-model" class="section level2">
 <h2>Proportional Odds Model</h2>
-<p>For a single severity outcome <span class="math inline">\(Y_i\)</span> with covariates <span class="math inline">\(X_i\)</span>, the proportional odds model suggests that <span class="math display">\[
+<p>For a single severity outcome <span class="math inline">\(Y_i\)</span> with covariates <span class="math inline">\(X_i\)</span>, the usual proportional odds model suggests that <span class="math display">\[
   {\displaystyle
     \begin{aligned}
       logit(P(Y_i\leq k))=log(\frac{P(Y_i\leq k)}{1-P(Y_i\leq k)}) = \alpha_k - x_i^T\beta\\
@@ -1826,11 +1828,19 @@ l(\alpha, \beta)&amp;= \sum_{i=1}^n\sum_{k=1}^3I(Y_i=k)log(P(Y_i=k))\\
   }
 \]</span></p>
 </div>
+<div id="proportional-odds-model-with-penalty" class="section level2">
+<h2>Proportional Odds Model with Penalty</h2>
+<p>Although we only listed 13 predictors of interest, the Weather_Condition variable contains 53 levels alone, which can be problematic to fit especially if interactions are of interest. Meanwhile, aggregating the levels can be very subjective. To solve this problem, we integrate a &lt;—insert the kind of penalty—&gt; penalty term into the ordinary proportional odds model.</p>
+<p>&lt;—formulas for penalty and the likelihood function and gradient—-&gt;</p>
+</div>
+<div id="variable-selection" class="section level2">
+<h2>Variable Selection</h2>
+</div>
 <div id="random-forest" class="section level2">
 <h2>Random Forest</h2>
-<p>Secondly, we implement the random forest method directly from the <code>caret</code> package in R for a comparison to the proportional odds model. We use 5-fold Cross Validation on the training data to build the model. Additionally, a tuning grid is used to tune the parameter <code>mtry</code>, which defines the number of variables randomly collected to be sampled at each split time. The tuning grid used explored <code>mtry</code> values between <span class="math inline">\(1\)</span> and <span class="math inline">\(3\)</span>.</p>
+<p>We implement the random forest method directly from the <code>caret</code> package in R for a comparison to the proportional odds model. We use 5-fold Cross Validation on the training data to build the model. Additionally, a tuning grid is used to tune the parameter <code>mtry</code>, which defines the number of variables randomly collected to be sampled at each split time. The tuning grid used explored <code>mtry</code> values <span class="math inline">\(1\)</span>, <span class="math inline">\(2\)</span>, and <span class="math inline">\(3\)</span>.</p>
 <p>It should be noted however, that the typical random forest classifier does not account for the fact that the classes are ordinal (i.e. class 1 is “closer” to class 2 than class 3). Therefore, it is of interest to explore a machine learning algorithm that can account for this. The R package <code>ordinalForest</code> does just that. We use the model with default hyperparameters on our data and compare to the traditional random forest and the proportional odds model.</p>
-<p>Downsampling?</p>
+<p>Since the levels of severity are not balanced, we also down-sampled the less severe outcomes to see if the predicted model improves in terms of accuracy and computation burden.</p>
 </div>
 <div id="evaluation-and-comparison-of-models" class="section level2">
 <h2>Evaluation and Comparison of Models</h2>

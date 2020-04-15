@@ -106,11 +106,11 @@ grid.raster(readPNG("Traffic_Signal.png"))
 ```
 
 # Methods 
-First, we apply a proportional odds model with severity of an accident as the outcome, and predictors listed in the previous section as covariates. Based on paramter estimates of this model <---potentially with penalization--->, we identify variables that are most associated with severity. In parallel, starting with the same set of variables, we use random forest to find the predictors and build a model that yields the best classification.  
+We apply a proportional odds model with severity of an accident as the outcome, and predictors listed in the previous section as covariates. Based on paramter estimates of this model <---potentially with penalization--->, we identify variables that are most associated with severity. In parallel, starting with the same set of variables, we use random forest to find the predictors and build a model that yields the best classification.  
 
 
 ## Proportional Odds Model  
-For a single severity outcome $Y_i$ with covariates $X_i$, the proportional odds model suggests that 
+For a single severity outcome $Y_i$ with covariates $X_i$, the usual proportional odds model suggests that 
 \[
   {\displaystyle
     \begin{aligned}
@@ -192,13 +192,22 @@ The gradient is
   \end{aligned}
   }
 \]   
+
+## Proportional Odds Model with Penalty  
+Although we only listed 13 predictors of interest, the Weather_Condition variable contains 53 levels alone, which can be problematic to fit especially if interactions are of interest. Meanwhile, aggregating the levels can be very subjective. To solve this problem, we integrate a <---insert the kind of penalty---> penalty term into the ordinary proportional odds model.
+
+<---formulas for penalty and the likelihood function and gradient---->
+
+
+## Variable Selection
+
   
 ## Random Forest
-Secondly, we implement the random forest method directly from the `caret` package in R for a comparison to the proportional odds model.  We use 5-fold Cross Validation on the training data to build the model. Additionally, a tuning grid is used to tune the parameter `mtry`, which defines the number of variables randomly collected to be sampled at each split time. The tuning grid used explored `mtry` values between $1$ and $3$. 
+We implement the random forest method directly from the `caret` package in R for a comparison to the proportional odds model.  We use 5-fold Cross Validation on the training data to build the model. Additionally, a tuning grid is used to tune the parameter `mtry`, which defines the number of variables randomly collected to be sampled at each split time. The tuning grid used explored `mtry` values $1$, $2$, and $3$. 
 
 It should be noted however, that the typical random forest classifier does not account for the fact that the classes are ordinal (i.e. class 1 is "closer" to class 2 than class 3). Therefore, it is of interest to explore a machine learning algorithm that can account for this. The R package `ordinalForest` does just that. We use the model with default hyperparameters on our data and compare to the traditional random forest and the proportional odds model.
 
-Downsampling?
+Since the levels of severity are not balanced, we also down-sampled the less severe outcomes to see if the predicted model improves in terms of accuracy and/or computation burden. We randomly sampled 1081 incidents from severity-1 incidents and 1081 incidents from severity-2 incidents, so that the three levels are balanced.
 
 ## Evaluation and Comparison of Models
 One way to evaluate the performance of our methods is to test the accuracy of the models on the test set. To do this, the fraction of the correctly classified observations is divided by the total number of observations in the test set. 
