@@ -27,11 +27,16 @@ The aim of this project is to use Car Accident Data from North Carolina in 2016-
 
 Our R package `group3project` contains the functions needed to fit a proportional odds model and random forest as well as the datasets we used to do so for this report: 
 
-*Note: edit this as needed as we fill in the R package, may not need our own Random Forest functions
+*Note: edit this as needed as we fill in the R package
 
-* Functions for Proportional Odds Model 
+* Functions for Proportional Odds Model
+    + loglik.pom: computes log likelihood of a proportional odds model
+    + gradient.pom:      <--which one to use?
+    + gradient.pom2:
+    
 
-* Functions for Random Forest 
+* Functions for Random Forest
+    + calc_acc: calculates accuracy of classification
 
 * Datasets 
     + Testing Data 
@@ -188,10 +193,10 @@ We can also compare the computational time it takes to build each model. This is
 # Results 
 
 ## Proportional Odds Model
+```{r}
 
 
-
-
+```
 ## Random Forest
 
 ## Method Comparison 
@@ -200,12 +205,18 @@ ordinalForest took about 1.5 hours.
 
 # Discussion 
 
+comparison of POM and RF
+  -accuracy
+  -speed
+  -applicability
+
 ## Limitations 
 
-# Data References 
-
-Source of data: https://www.kaggle.com/sobhanmoosavi/us-accidents
-
+# Data Source 
+The Car Accidents data set for North Carolina and the derived training and test data sets are provided in our project repository. Due to the size, we do not include the original nation-wide car accidents data set in our repository, but interested reader can find the dataset and related information on https://www.kaggle.com/sobhanmoosavi/us-accidents and https://smoosavi.org/datasets/us_accidents.  
+  
+  
+# References 
 [1] Moosavi, Sobhan, Mohammad Hossein Samavatian, Srinivasan Parthasarathy, and Rajiv
       Ramnath. “A Countrywide Traffic Accident Dataset.”, 2019.
   
