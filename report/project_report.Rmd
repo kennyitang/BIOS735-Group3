@@ -45,22 +45,27 @@ Our R package `group3project` contains the functions needed to fit a proportiona
 
 
 ```{r}
-## load package here 
+## load package here
+library(png)
+library(grid)
 ```
 
 # Data
-The original dataset had 49 total attributes, including attributes related to traffic, location, weather, points of interest, and period of day.  For our purposes, we removed most location attributes due to various reasons. After aggregating the County variable into urban and rural factor levels, it was apparent that about 95% of the accident data was derived from urban areas. Therefore this information was not useful for prediction. We also chose to remove Wind Chill and Precipitation since they had around 60% missingess. Additionally, most of the points of interest variables had very low variability across observations, so we chose to only keep Crossing and Traffic Signal.The analysis dataset contains 119,279 traffic accidents from North Carolina between the years 2016 and 2019.
+The original dataset had 49 total attributes, including attributes related to traffic, location, weather, points of interest, and period of day.  Pre-processing the data set was necessary to allow us to focus on the variables and observations of real relevance to our aim.    
+
+For our purposes, we removed most location attributes. After aggregating the County variable into urban and rural factor levels, it was apparent that about 95% of the accident data was derived from urban areas. Therefore this information was not useful for prediction. We also chose to remove Wind Chill and Precipitation since they had around 60% missingess. Additionally, most of the points of interest variables had very low variability across observations, so we chose to only keep Crossing and Traffic Signal.The analysis dataset contains 119,279 traffic accidents from North Carolina between the years 2016 and 2019.
 
 In terms of traffic incidents, rows missing all weather variables were removed. Additionally, the analysis data were split up into training data (pre-2019) and testing data (2019) as mentioned previously. The final training dataset has 75,887 observations and the testing has 43,392 observations.
-
-The variables selected for analysis are as follows: 
+  
+  
+The variables selected for analysis, and some accompany exploratory plots are as follows: 
 
 ### Outcome:
 1. Severity:  severity of the accident in terms of the impact on traffic, which is an integer from 1 to 3 with increasing impact. This is an ordinal variable and the outcome of interest.  
 
 Originally this variable had four categories (1-4), but only 24 observations had severity of 1, so we combined severities 1 and 2 and readjusted the scale.  
 
-It should be noted that the dataset sources are rather vague on the definition and derivation of this outcome variable. Length of delay caused by the accident is mentioned, and we assume that scope, such as how many lane closures there were, may also be taken into account when determining the severity. 
+It should be noted that the data set sources are rather vague on the definition of this outcome variable. Length of delay caused by the accident is the major determinant, and we assume that scope, such as how many lane closures there were, may also be taken into account when determining the severity. 
 
 ### Predictors:
 
@@ -82,11 +87,23 @@ It should be noted that the dataset sources are rather vague on the definition a
 9. Visibility: numeric, in miles  
 10. Wind Speed: numeric, in mph 
 11. Weather Condition -- aggregate? (53 factors)  (not using right now)
+
+```{r fig.width=8,echo=FALSE}
+grid.raster(readPNG("weather_boxplots.png"))
+```
   
 **Points of Interest**  
 
 12. Crossing: TRUE/FALSE, presence of a crossing nearby for pedestrians, cyclists, etc. 
 13. Traffic_Signal: TRUE/FALSE, presence of a traffic signal nearby on an intersection 
+
+```{r fig.width=6,echo=FALSE}
+grid.raster(readPNG("crossing.png"))
+```
+
+```{r fig.width=6,echo=FALSE}
+grid.raster(readPNG("Traffic_Signal.png"))
+```
 
 # Methods 
 First, we apply a proportional odds model with severity of an accident as the outcome, and predictors listed in the previous section as covariates. Based on paramter estimates of this model <---potentially with penalization--->, we identify variables that are most associated with severity. In parallel, starting with the same set of variables, we use random forest to find the predictors and build a model that yields the best classification.  
@@ -224,6 +241,10 @@ The Car Accidents data set for North Carolina and the derived training and test 
       Teodorescu, and Rajiv Ramnath. "Accident Risk Prediction based on Heterogeneous
       Sparse Data: New Dataset and Insights." In proceedings of the 27th ACM SIGSPATIAL
       International Conference on Advances in Geographic Information Systems, ACM, 2019.
+      
+[3] Bing documentation on traffic incident data: https://docs.microsoft.com/en-us/bingmaps/rest-services/traffic/traffic-incident-data
+   
+[4] MapQuest documentation on traffic incident data: https://developer.mapquest.com/documentation/traffic-api/incidents/get/#response_field-severity
       
 *** add sources for methods, particularly where we derived the proportional odds likelilhood/gradient from
 
