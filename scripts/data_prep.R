@@ -250,7 +250,24 @@ ggsave("./report/interstateplot.png")
 #   geom_bar(aes(x = Severity, fill = road_type), position = "dodge") +
 #   theme_bw()
 
+#========= Source ============================================
+bing_plot = data_complete %>%
+  filter(str_detect(Source, "Bing")) %>%
+  ggplot() + 
+  geom_sf(data=nc, fill = "white") +
+  geom_point(aes(x = Start_Lng, y = Start_Lat, label = Street), alpha = 0.1) +
+  labs(title = "Bing",  x = "Longitude", y = "Latitude") +
+  theme_bw()
 
+mapquest_plot = data_complete %>%
+  filter(str_detect(Source, "MapQuest")) %>%
+  ggplot() + 
+  geom_sf(data=nc, fill = "white") +
+  geom_point(aes(x = Start_Lng, y = Start_Lat, label = Street), alpha = 0.1) +
+  labs(title = "MapQuest",  x = "Longitude", y = "Latitude") +
+  theme_bw()
+bing_plot
+mapquest_plot
 
 #======== Write data sets to CSV ======================================
 

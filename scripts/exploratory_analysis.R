@@ -176,6 +176,29 @@ ggplot(trn.data, aes(x = interstate, group = Severity.c)) +
 
 
 
+# Source
+ggplot(trn.data, aes(x = Source, group = Severity.c)) +
+  geom_bar(aes(y = ..prop.., fill = Severity.c), stat = "count", position = "dodge") +
+  geom_text(aes(label = scales::percent(..prop..),
+                y = ..prop..), 
+            stat = "count", 
+            vjust = -0.5, size = 3) +
+  facet_grid(~Severity.c) +
+  labs(y = "Percent") + 
+  scale_y_continuous(labels=scales::percent) +
+  theme_minimal()
+
+
+ggplot(trn.data, aes(x = Severity.c, group = Source)) +
+  geom_bar(aes(y = ..prop.., fill = Source), stat = "count", position = "dodge") +
+  geom_text(aes(label = scales::percent(..prop..),
+                y = ..prop..), 
+            stat = "count", 
+            vjust = -0.5, size = 3) +
+  facet_grid(~Source) +
+  labs(y = "Percent") + 
+  scale_y_continuous(labels=scales::percent) +
+  theme_minimal()
 
 
 
