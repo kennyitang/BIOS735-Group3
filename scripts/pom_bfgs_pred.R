@@ -11,7 +11,7 @@ logistic = function(t){
   return(logis)
 }
 
-##Y needs to start at zero.  
+  
 # loglikelihood function
 loglik.pom = function(y, X, param){
   
@@ -119,56 +119,13 @@ gradient.pom = function(param, y, X){
   return(c(d1.a, d1.beta))
 }
 
-####trying out on an example##########
 
-#Example data: dat$pol.ideology. IV: dat$party
-party <- factor(rep(c("Rep","Dem"), c(407, 428)), 
-                levels=c("Rep","Dem"))  
-rpi <- c(30, 46, 148, 84, 99) # cell counts
-dpi <- c(80, 81, 171, 41, 55) # cell counts
-ideology <- c("Very Liberal","Slightly Liberal","Moderate","Slightly Conservative","Very Conservative")
-pol.ideology <- factor(c(rep(ideology, rpi), 
-                         rep(ideology, dpi)), levels = ideology)
-dat <- data.frame(party,pol.ideology)
-
-y = factor(dat$pol.ideology, levels = unique(dat$pol.ideology), labels = c(0:(length(unique(dat$pol.ideology))-1)), ordered = T)
-X = as.matrix(as.numeric(factor(dat$party, levels = unique(dat$party), labels = c(1:(length(unique(dat$party)))), ordered = F)))
-
-#initial values
-init.a_vec = seq(-2, 2, length.out = length(unique(y)) - 1) #should be half negative and half positive
-init.beta = rep(-0.5, ncol(X))
-par = c(init.a_vec, init.beta)
-tol = 10^-4
-
-
-#check gradient first
-grchk(par, function(x, X, y){loglik.pom(param = x, y=y, X=X)} , 
-      function(x, X, y){gradient.pom(param = x, y=y, X=X)}, trace=100, y = y,X = X)
-
-fit = optimx(
-  par = c(init.a_vec, init.beta), # initial values for the parameters. 
-  fn = function(x, X, y){loglik.pom(param = x, y=y, X=X)}, # log likelihood
-#  gr = NULL, # use this to debug fn and gr separately
-  gr = function(x, X, y){gradient.pom(param = x, y=y, X=X)}, # gradient/1st derivative
-  method = "BFGS",
-  y = y,
-  X = X,
-  #itmax = maxit, # max number of iterations
-  control = list(
-    trace = 100, # higher number print more detailed output
-    maximize = T, # default is to minimize
-    abstol= tol
-  )
-)
-
-print(fit) 
-
-#optimHess(par, fn, gr = NULL, ..., control = list())
-
-# fit proportional odds model
-library(MASS)
-pom <- polr(pol.ideology ~ party, data=dat)
-summary(pom)
+recode.factor = function(formula, data){
+  # dependent variable needs to be factor
+  A = model.matrix(formula, data = as.data.frame(data))
+  X = A[,-1] # intecept already in the likelihood
+  return(X) 
+}
 
 ############Fitting the actual training data set#########
 library(MASS)
@@ -176,41 +133,31 @@ library(data.table)
 trn_data = fread("~/Github/BIOS735-Group3/data/NC_Accidents_trn.csv")
 tst_data = fread("~/Github/BIOS735-Group3/data/NC_Accidents_tst.csv")
 
+# Recode y into factor - Training data set
 trn_data$Severity_c = as.factor(trn_data$Severity)
 tst_data$Severity_c = as.factor(tst_data$Severity)
+y = factor(trn_data$Severity, levels = c(1,2,3), 
+           labels = c(1:length(unique(trn_data$Severity))), ordered = T)
 
-#need factors that starts at zero, and recode string and logicals in the data
-y = factor(trn_data$Severity, levels = c(1,2,3), labels = c(0:(length(unique(trn_data$Severity))-1)), ordered = T)
-X = trn_data[, c("Source", "Side", "Temperature(F)", "Humidity(%)", "Pressure(in)", 
-                 "Visibility(mi)","Wind_Speed(mph)", "Crossing", "Traffic_Signal",
-                 "Sunrise_Sunset", "weekday", "interstate")]
-strTmp = c("Source", "Side","Sunrise_Sunset")
+# Build model matrix (with intercept left out)
+X = as.matrix(recode.factor(Severity_c ~ Source + Side + `Temperature(F)` + `Humidity(%)` + `Pressure(in)` + 
+                    `Visibility(mi)` + `Wind_Speed(mph)` + Crossing + Traffic_Signal +
+                    Sunrise_Sunset + weekday + interstate, data = trn_data))
 
-ind <- match(strTmp, names(X))
-for (i in seq_along(ind)) {
-  set(X, NULL, ind[i], as.numeric(as.factor(X[[ind[i]]]))) # need to check coding scheme for characters
-}
-strTmp = c("Crossing", "Traffic_Signal","weekday", "interstate")
-ind <- match(strTmp, names(X))
-for (i in seq_along(ind)) {
-  set(X, NULL, ind[i], as.numeric(X[[ind[i]]]))
-}
-
-
-init.a_vec = seq(-0.5, 0.5, length.out = length(unique(y)) - 1) #should be half negative and half positive
+# Initial values
+init.a_vec = seq(-0.5, 0.5, length.out = length(unique(y)) - 1) #possibly not the best starting values
 init.beta = rep(-0.05, ncol(X))
-tol = 10^-4
+tol = 10^-6
 
-#how to embed library(optimx) in package?
-library(optimx)
+#polr() uses glm.fit to get starting values, still trying to do the same here
+#glm = glm.fit(cbind(1,X), y, family = binomial("logit")) # how to specify offset??
+# glm$coefficients
 
-par = c(init.a_vec, init.beta)
-#checking the gradient on the intial parameters
-grchk(par, function(x, X, y){loglik.pom(param = x, y=y, X=X)} , 
-      function(x, X, y){gradient.pom(param = x, y=y, X=X)}, trace=100, y = y,X = X)
-
-nc_fit = optimx(
-  par = c(init.a_vec, init.beta), # initial values for the parameters. 
+# Fitting
+set.seed(11)
+start = Sys.time()
+nc_fit = optimx::optimx(
+  par = c(a = init.a_vec, b = init.beta), #polr() use fitted values. Trying fitted values here.
   fn = function(x, X, y){loglik.pom(param = x, y=y, X=X)}, # log likelihood
   #  gr = NULL, # use this to debug fn and gr separately
   gr = function(x, X, y){gradient.pom(param = x, y=y, X=X)}, # gradient/1st derivative
@@ -222,19 +169,68 @@ nc_fit = optimx(
   control = list(
     trace = 100, # higher number print more detailed output
     maximize = T, # default is to minimize
-    abstol= tol
+    abstol= tol,
+    kkt = F
   )
 )
-print(nc_fit) # polr is dummy variable coding for categorical output. Tis is not yet.
+end = Sys.time() 
+print(end - start) # 1.22 mins without KKT optimality test
+print(nc_fit)  #Different estimates from polr()!
 
+
+#Training set prediction
+ahat <-  as.numeric(nc_fit[1:2])
+bhat <- as.numeric(nc_fit[3:15])   
+logit1 <- ahat[1] - X %*% bhat
+logit2 <- ahat[2] - X %*% bhat
+pLeq1  <- 1 / (1 + exp(-logit1))   # p(Y <= 1)
+pLeq2  <- 1 / (1 + exp(-logit2))   # p(Y <= 2)
+pMat   <- cbind(p1=pLeq1, p2=pLeq2-pLeq1, p3=1-pLeq2)  # matrix p(Y = g)
+categHat <- levels(y)[max.col(pMat)]
+#Training error
+sum(categHat != y) / length(y)
+
+#Test set prediction
+X2 = recode.factor(Severity_c ~ Source + Side + `Temperature(F)` + `Humidity(%)` + `Pressure(in)` + 
+                    `Visibility(mi)` + `Wind_Speed(mph)` + Crossing + Traffic_Signal +
+                    Sunrise_Sunset + weekday + interstate, data = tst_data)
+y2 = factor(tst_data$Severity, levels = c(1,2,3), 
+           labels = c(1:length(unique(tst_data$Severity))), ordered = T)
+
+ahat <-  as.numeric(nc_fit[1:2])
+bhat <- as.numeric(nc_fit[3:15])   
+logit1 <- ahat[1] - X2 %*% bhat
+logit2 <- ahat[2] - X2 %*% bhat
+pLeq1  <- 1 / (1 + exp(-logit1))   # p(Y <= 1)
+pLeq2  <- 1 / (1 + exp(-logit2))   # p(Y <= 2)
+pMat   <- cbind(p1=pLeq1, p2=pLeq2-pLeq1, p3=1-pLeq2)  # matrix p(Y = g)
+categHat2 <- levels(y2)[max.col(pMat)]
+#Test error
+sum(categHat2 != y2) / length(y2)
 
 #fitting with polr
 set.seed(11)
 start = Sys.time()
-nc_trn = polr(Severity_ord ~ Source + Side + `Temperature(F)` + `Humidity(%)` + `Pressure(in)` + 
+nc_trn = polr(Severity_c ~ Source + Side + `Temperature(F)` + `Humidity(%)` + `Pressure(in)` + 
                 `Visibility(mi)` + `Wind_Speed(mph)` + Crossing + Traffic_Signal +
                 Sunrise_Sunset + weekday + interstate, data = trn_data)
 end = Sys.time()
 print(end - start)
-summary(nc_trn)
+coef.polr = summary(nc_trn)$coefficients
 
+nc_yx = polr(y ~ X)
+summary(nc_yx)$coefficients #Same estimates, but not the cacse for optim...
+
+###########
+
+
+
+
+
+Phat <- predict(nc_trn, type="probs") 
+categHat.pol <- levels(y)[max.col(Phat)]
+sum(categHat.pol != y) / length(y)
+
+Phat2 <- predict(nc_trn, type="probs") 
+categHat.pol <- levels(y)[max.col(Phat)]
+sum(categHat.pol != y) / length(y)
