@@ -32,7 +32,7 @@ loglik.pom = function(y, X, param){
   value2 = 0 
   for (i in 2: length(a_vec) ){
     
-    X.mid = as.matrix(X[y == unique(y)[i],])
+    X.mid = as.matrix(X[y == as.numeric(levels(y)[i]),])
     subtrac = logistic(a_vec[i] - X.mid %*% beta) - 
                     logistic(a_vec[i - 1] - X.mid %*% beta)
     subtrac = ifelse(subtrac < 0, 0, subtrac) # bound the lilkelihood to avoid NaN
@@ -72,7 +72,7 @@ gradient.pom = function(param, y, X){
     value2 = 0 
     for (i in 2: length(a_vec) ){
       
-      X.mid = as.matrix(X[y == unique(y)[i],])
+      X.mid = as.matrix(X[y == as.numeric(levels(y)[i]),])
       mid.d1 = sum( 1 / (logistic(a_vec[i] - X.mid %*% beta ) - logistic(a_vec[i-1] - X.mid %*% beta) ) * 
         ( X.mid[,kk] * exp(X.mid %*% beta - a_vec[i-1]) / (1 + exp(X.mid %*% beta - a_vec[i-1]))^2 - 
             X.mid[,kk] * exp(X.mid %*% beta - a_vec[i]) / (1 + exp(X.mid %*% beta - a_vec[i]))^2 ) )
@@ -86,9 +86,9 @@ gradient.pom = function(param, y, X){
   #d1 for the first and last threshold values
   
   X1.a = as.matrix(X[y == min(y),])
-  X2.a = as.matrix(X[y == unique(y)[2],])
+  X2.a = as.matrix(X[y == as.numeric(levels(y)[2]),])
   XJ.a = as.matrix(X[y == max(y),])
-  XJm1.a = as.matrix(X[y == unique(y)[length(unique(y))-1],])
+  XJm1.a = as.matrix(X[y == as.numeric( levels(y)[length(unique(y))-1] ),])
   
   value1 = 0
   value1 = sum( exp(X1.a %*% beta - a_vec[1]) / (1 + exp(X1.a %*% beta - a_vec[1]))) - 
@@ -105,8 +105,8 @@ gradient.pom = function(param, y, X){
   valuem = rep(0, catgry - 2)
   for (i in 2: (catgry -1) ){
     
-    Xmid.a = as.matrix(X[y == unique(y)[i],])
-    Xmid.a.p1 = as.matrix(X[y == unique(y)[i+1],])
+    Xmid.a = as.matrix(X[y == as.numeric( levels(y)[i]) ,])
+    Xmid.a.p1 = as.matrix(X[y == as.numeric( levels(y)[i+1] ) ,])
     valuem[i-1] = sum( ( exp(Xmid.a %*% beta - a_vec[i]) / (1 + exp(Xmid.a %*% beta - a_vec[i]))^2 ) / 
                          (logistic(a_vec[i] - Xmid.a %*% beta) - logistic(a_vec[i-1] - Xmid.a %*% beta)) ) - 
       sum( logistic(a_vec[i] - Xmid.a.p1 %*% beta) * (1 - logistic(a_vec[i] - Xmid.a.p1 %*% beta)) / 
@@ -145,7 +145,7 @@ X = as.matrix(recode.factor(Severity_c ~ Source + Side + `Temperature(F)` + `Hum
                     Sunrise_Sunset + weekday + interstate, data = trn_data))
 
 # Initial values
-init.a_vec = seq(-0.5, 0.5, length.out = length(unique(y)) - 1) #possibly not the best starting values
+init.a_vec = seq(-1, 0.5, length.out = length(unique(y)) - 1) #possibly not the best starting values
 init.beta = rep(-0.05, ncol(X))
 tol = 10^-6
 
@@ -157,7 +157,7 @@ tol = 10^-6
 set.seed(11)
 start = Sys.time()
 nc_fit = optimx::optimx(
-  par = c(a = init.a_vec, b = init.beta), #polr() use fitted values. Trying fitted values here.
+  par = c(a = init.a_vec, b = init.beta), #polr() use fitted values.
   fn = function(x, X, y){loglik.pom(param = x, y=y, X=X)}, # log likelihood
   #  gr = NULL, # use this to debug fn and gr separately
   gr = function(x, X, y){gradient.pom(param = x, y=y, X=X)}, # gradient/1st derivative
@@ -174,11 +174,11 @@ nc_fit = optimx::optimx(
   )
 )
 end = Sys.time() 
-print(end - start) # 1.22 mins without KKT optimality test
+print(end - start) # 27.40 secs without KKT optimality test
 print(nc_fit)  #Different estimates from polr()!
 
 
-#Training set prediction
+###Training set prediction
 ahat <-  as.numeric(nc_fit[1:2])
 bhat <- as.numeric(nc_fit[3:15])   
 logit1 <- ahat[1] - X %*% bhat
@@ -188,9 +188,9 @@ pLeq2  <- 1 / (1 + exp(-logit2))   # p(Y <= 2)
 pMat   <- cbind(p1=pLeq1, p2=pLeq2-pLeq1, p3=1-pLeq2)  # matrix p(Y = g)
 categHat <- levels(y)[max.col(pMat)]
 #Training error
-sum(categHat != y) / length(y)
+sum(categHat != y) / length(y) #0.07407066
 
-#Test set prediction
+###Test set prediction
 X2 = recode.factor(Severity_c ~ Source + Side + `Temperature(F)` + `Humidity(%)` + `Pressure(in)` + 
                     `Visibility(mi)` + `Wind_Speed(mph)` + Crossing + Traffic_Signal +
                     Sunrise_Sunset + weekday + interstate, data = tst_data)
@@ -206,25 +206,22 @@ pLeq2  <- 1 / (1 + exp(-logit2))   # p(Y <= 2)
 pMat   <- cbind(p1=pLeq1, p2=pLeq2-pLeq1, p3=1-pLeq2)  # matrix p(Y = g)
 categHat2 <- levels(y2)[max.col(pMat)]
 #Test error
-sum(categHat2 != y2) / length(y2)
+sum(categHat2 != y2) / length(y2) #0.09935698
 
+
+###########
 #fitting with polr
 set.seed(11)
 start = Sys.time()
 nc_trn = polr(Severity_c ~ Source + Side + `Temperature(F)` + `Humidity(%)` + `Pressure(in)` + 
                 `Visibility(mi)` + `Wind_Speed(mph)` + Crossing + Traffic_Signal +
-                Sunrise_Sunset + weekday + interstate, data = trn_data)
+                Sunrise_Sunset + weekday + interstate , data = trn_data)
 end = Sys.time()
 print(end - start)
 coef.polr = summary(nc_trn)$coefficients
 
 nc_yx = polr(y ~ X)
-summary(nc_yx)$coefficients #Same estimates, but not the cacse for optim...
-
-###########
-
-
-
+summary(nc_yx)$coefficients 
 
 
 Phat <- predict(nc_trn, type="probs") 
