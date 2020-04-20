@@ -5,6 +5,42 @@
 
 # y needs to start at zero for this code to work
 
+# the start
+tol = 10^-6
+init.a_vec = seq(-1, 0.5, length.out = length(unique(y)) - 1) #possibly not the best starting values
+init.beta = rep(-0.05, ncol(X))
+par = c(a = init.a_vec, b = init.beta)
+maxit = 10000
+iter = 0
+alpha = 0.000001
+eps = Inf
+
+start = Sys.time()
+while(eps > tol & iter < maxit){ #gradient may not be scaled well
+  # save the previous value
+  logL0 = loglik.pom(y=y, X = X, param = par)
+  
+  # calculate h, the increment
+  h =  alpha*gradient.pom(par, y, X)
+  
+  # update lambda
+  par = par + h
+  
+  # update the log likelihood 
+  logL = loglik.pom(y=y, X = X, param = par)
+  
+  # calculate the euclidean distance, could also use the log likelihood if we wanted
+  eps  = sqrt(sum((logL - logL0)^2))
+  
+  # update the iteration number
+  iter = iter + 1
+  if(iter == maxit) warning("Iteration limit reached without convergence")
+  
+  # print out info to keep track
+  if(floor(iter/20) == ceiling(iter/20)) cat(sprintf("Iter: %d logL: %.2f eps:%f\n",iter, logL,eps))
+}
+end = Sys.time()
+print(end - start)
 
 logistic = function(t){
   logis = 1 / (1 + exp(-t))
@@ -13,7 +49,7 @@ logistic = function(t){
 
   
 # loglikelihood function
-loglik.pom = function(y, X, param){
+loglik.pomreg = function(y, X, param, penalty){
   
   a_vec = param[1:(length(unique(y)) - 1)]
   beta = param[-(1:length(unique(y)) - 1)]
@@ -41,12 +77,12 @@ loglik.pom = function(y, X, param){
     
   }
     
-  loglikesum = value1 + value2
+  loglikesum = value1 + value2 - penalty * sum(beta^2)
   return(loglikesum)
 }
 
 # lets write a function for the first derivative
-gradient.pom = function(param, y, X){
+gradient.pomreg = function(param, y, X, penalty){
   #columne vector of p*1, p = # of beta + # of a
   a_vec = param[1:(length(unique(y)) - 1)]
   beta = param[-(1:length(unique(y)) - 1)]
@@ -79,7 +115,7 @@ gradient.pom = function(param, y, X){
         
       value2 = value2 + mid.d1
     }
-    d1.beta[kk] = value1 + value2
+    d1.beta[kk] = value1 + value2 - penalty*2*beta[kk]
   }
   
   #alpha
@@ -143,11 +179,11 @@ y = factor(trn_data$Severity, levels = c(1,2,3),
 X = as.matrix(recode.factor(Severity_c ~ Source + Side + `Temperature(F)` + `Humidity(%)` + `Pressure(in)` + 
                     `Visibility(mi)` + `Wind_Speed(mph)` + Crossing + Traffic_Signal +
                     Sunrise_Sunset + weekday + interstate, data = trn_data))
-X[,4:8] = scale(X[,4:8])
 
 # Initial values
 init.a_vec = seq(-1, 0.5, length.out = length(unique(y)) - 1) #possibly not the best starting values
 init.beta = rep(-0.05, ncol(X))
+lambda = 0.0001
 tol = 10^-6
 
 #polr() uses glm.fit to get starting values, still trying to do the same here
@@ -158,28 +194,28 @@ tol = 10^-6
 set.seed(11)
 start = Sys.time()
 nc_fit = optimx::optimx(
-  #par = c(a = coef.polr[14:15,1], b = coef.polr[1:13,1]), #polr() use fitted values.
-  par = c(a = init.a_vec, b = init.beta), 
-  fn = function(x, X, y){loglik.pom(param = x, y=y, X=X)}, # log likelihood
-  gr = function(x, X, y){gradient.pom(param = x, y=y, X=X)}, # gradient/1st derivative
+  par = c(a = coef.polr[14:15,1], b = coef.polr[1:13,1]), #polr() use fitted values.
+  fn = function(x, X, y, l){loglik.pomeg(param = x, y=y, X=X, penalty = l)}, # log likelihood
+  gr = function(x, X, y, l){gradient.pomreg(param = x, y=y, X=X,penalty = l)}, # gradient/1st derivative
   method = "BFGS",
   y = y,
   X = X,
-  hessian = T,
+  l = lambda,
+  #hessian = T,
   #itmax = maxit, # max number of iterations
   control = list(
-    trace = 1000, # higher number print more detailed output
+    trace = 100, # higher number print more detailed output
     maximize = T, # default is to minimize
     abstol= tol,
-    kkt = T
+    kkt = F
   )
 )
 end = Sys.time() 
-print(end - start) # 1.5 mins with Hessian
+print(end - start) # 35.48 secs without KKT optimality test
 print(nc_fit) 
 #hessian still negative
-optim.hess = attr(nc_fit, "details")[,"nhatend"][[1]]
-optim.se = sqrt(diag(solve(-optim.hess)))
+attr(nc_fit, "details")[,"nhatend"]
+
 
 ###Training set prediction
 ahat <-  as.numeric(nc_fit[1:2])
@@ -197,7 +233,6 @@ sum(categHat != y) / length(y) #0.07407066
 X2 = recode.factor(Severity_c ~ Source + Side + `Temperature(F)` + `Humidity(%)` + `Pressure(in)` + 
                     `Visibility(mi)` + `Wind_Speed(mph)` + Crossing + Traffic_Signal +
                     Sunrise_Sunset + weekday + interstate, data = tst_data)
-X2[,4:8] = scale(X2[,4:8])
 y2 = factor(tst_data$Severity, levels = c(1,2,3), 
            labels = c(1:length(unique(tst_data$Severity))), ordered = T)
 
@@ -210,7 +245,7 @@ pLeq2  <- 1 / (1 + exp(-logit2))   # p(Y <= 2)
 pMat   <- cbind(p1=pLeq1, p2=pLeq2-pLeq1, p3=1-pLeq2)  # matrix p(Y = g)
 categHat2 <- as.numeric(levels(y2)[max.col(pMat)])
 #Test error
-sum(categHat2 != y2) / length(y2) #0.09732882
+sum(categHat2 != y2) / length(y2) #0.09935698
 1- sum(categHat2 != y2) / length(y2) # failed to predict level 3 accidents. All 1 and 2 in the data.
 
 #Kappa
@@ -224,42 +259,19 @@ set.seed(11)
 start = Sys.time()
 nc_trn = polr(Severity_c ~ Source + Side + `Temperature(F)` + `Humidity(%)` + `Pressure(in)` + 
                 `Visibility(mi)` + `Wind_Speed(mph)` + Crossing + Traffic_Signal +
-                Sunrise_Sunset + weekday + interstate , data = trn_data, Hess = T)
+                Sunrise_Sunset + weekday + interstate , data = trn_data)
 end = Sys.time()
 print(end - start)
-sqrt(diag(solve(nc_trn$Hessian)))
-
 coef.polr = summary(nc_trn)$coefficients
 
 nc_yx = polr(y ~ X)
-coef.polrs = summary(nc_yx)$coefficients 
-#Phat <- predict(nc_trn, type="probs") 
-#categHat.pol <- levels(y)[max.col(Phat)] 
-#sum(categHat.pol != y) / length(y)
+summary(nc_yx)$coefficients 
 
-#Plotting coefficients
-est.mat = coef.polr[,1:2]
-est.mat[,1:2] = coef.polrs[,1:2]
-est.mat = as.data.frame(cbind(est.mat, 0, 0) ) 
-colnames(est.mat) = c("MASS", "MASS.se", "OptimFunction", "Optim.se")
-est.mat[1:length(beta),3] = as.numeric(nc_fit[(length(a_vec)+1):length(c(a_vec,beta))])
-est.mat[(length(beta)+1):length(c(a_vec,beta)),3] = as.numeric(nc_fit[1:length(a_vec)])
-est.mat[1:length(beta),4] = optim.se[(length(a_vec)+1):length(c(a_vec,beta))]
-est.mat[(length(beta)+1):length(c(a_vec,beta)),4] = optim.se[1:length(a_vec)]
-est.mat$var = rownames(est.mat)
-est.mat = est.mat[1:length(beta),]
 
-library(reshape2)
-est.melt <- melt(est.mat, id.vars = c("var"), measure.vars = c("MASS", "OptimFunction"),
-                 variable.name = "Function", value.name = "Estimates" )
-est.melt$SE <- c(est.mat$MASS.se, est.mat$Optim.se)
+Phat <- predict(nc_trn, type="probs") 
+categHat.pol <- levels(y)[max.col(Phat)] 
+sum(categHat.pol != y) / length(y)
 
-library(ggplot2)
-g <- ggplot(est.melt, aes(x = reorder(as.factor(var), -abs(Estimates)), y = Estimates, fill = Function)) + 
-  geom_bar(stat = "identity", color = "black", position = position_dodge())+ 
-  geom_errorbar(aes(ymin=Estimates-SE, ymax=Estimates+SE), width = .2,
-                position = position_dodge(0.9)) + xlab("Predictors") + theme_bw()+
-  theme(text = element_text(size=20),axis.text.x = element_text(size = 18,angle = 45, hjust = 1, vjust = 1))+
-  scale_y_continuous(limits = c(-5,5)) + scale_fill_manual(values=c('#ED7D31','#4472C4'))+
-  ggtitle("Prop. Odds Model Coefficient Estimates")
-plot(g)
+Phat2 <- predict(nc_trn, type="probs") 
+categHat.pol <- levels(y)[max.col(Phat)]
+sum(categHat.pol != y) / length(y)
