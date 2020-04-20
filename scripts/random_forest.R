@@ -213,6 +213,39 @@ postResample(preds$ypred, datatest$Severity_c)
 
 ############################### RF Map Quest
 
+
+
+set.seed(12984)
+mq.trn <- trn_data %>% dplyr::filter(Source == "MapQuest" & !(Severity_c == "3"))
+mq.test <- tst_data %>% dplyr::filter(Source == "MapQuest" & !(Severity_c == "3"))
+mq.test$Severity_c <- droplevels(mq.test$Severity_c)
+mq.trn$Severity_c <- droplevels(mq.trn$Severity_c)
+
+set.seed(3)
+start = Sys.time()
+rf_mod_red = train(
+  Severity_c ~ Side + `Temperature(F)` + `Humidity(%)` + `Pressure(in)` + 
+    `Visibility(mi)` + `Wind_Speed(mph)` + Crossing + Traffic_Signal +
+    Sunrise_Sunset + weekday + interstate, 
+  data = mq.trn, 
+  method = "rf",
+  trControl = cv_5,
+  tuneGrid = rf_grid
+)
+end = Sys.time()
+print(end - start)
+
+rf_mod_red$results
+rf_mod_red$bestTune
+varImp(rf_mod_red)
+varImpPlot(rf_mod_red$finalModel)
+#Obtain test accuracy
+calc_acc(actual = tst_data$Severity_c, predicted = predict(rf_mod_red, newdata = tst_data))
+
+# Confusion Matrix, has a lot of metrics including Kappa
+confusionMatrix(predict(rf_mod_red, newdata = mq.test), mq.test$Severity_c)
+
+
 ############ Random forest Downsampling
 
 set.seed(12984)
@@ -248,6 +281,37 @@ calc_acc(actual = tst_data$Severity_c, predicted = predict(rf_mod_red, newdata =
 confusionMatrix(predict(rf_mod_red, newdata = downsample.test), downsample.test$Severity_c)
 
 ############################### RF Bing
+
+
+set.seed(12984)
+bing.trn <- trn_data[c(which(trn_data$Source == "Bing")), ]
+bing.test <- tst_data %>% dplyr::filter(Source == "Bing")
+bing.test$Severity_c <- droplevels(downsample.test$Severity_c)
+bing.trn$Severity_c <- droplevels(downsample.trn$Severity_c)
+
+set.seed(3)
+start = Sys.time()
+rf_mod_red = train(
+  Severity_c ~ Side + `Temperature(F)` + `Humidity(%)` + `Pressure(in)` + 
+    `Visibility(mi)` + `Wind_Speed(mph)` + Crossing + Traffic_Signal +
+    Sunrise_Sunset + weekday + interstate, 
+  data = bing.trn, 
+  method = "rf",
+  trControl = cv_5,
+  tuneGrid = rf_grid
+)
+end = Sys.time()
+print(end - start)
+
+rf_mod_red$results
+rf_mod_red$bestTune
+varImp(rf_mod_red)
+varImpPlot(rf_mod_red$finalModel)
+#Obtain test accuracy
+calc_acc(actual = tst_data$Severity_c, predicted = predict(rf_mod_red, newdata = tst_data))
+
+# Confusion Matrix, has a lot of metrics including Kappa
+confusionMatrix(predict(rf_mod_red, newdata = bing.test), bing.test$Severity_c)
 
 ############ Random forest Downsampling
 
