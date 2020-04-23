@@ -13,8 +13,8 @@ if(!("group3project" %in% list.files())){
 setwd("group3project")
 # add a function in ./R/sample-functions.R before building
 setwd("../")
-build("group3project")
-document("group3project")  # creates NAMESPACE and ./man/ folder with roxygen files
+#build("group3project")
+document()  # creates NAMESPACE and ./man/ folder with roxygen files
 load_all()
 
 # needs to be done in the group3project.Rproj:
