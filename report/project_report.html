@@ -2553,6 +2553,15 @@ window.onload = function() {
   PagedTableDoc.initAll();
 };
 </script>
+<script>$(document).ready(function(){
+    if (typeof $('[data-toggle="tooltip"]').tooltip === 'function') {
+        $('[data-toggle="tooltip"]').tooltip();
+    }
+    if ($('[data-toggle="popover"]').popover === 'function') {
+        $('[data-toggle="popover"]').popover();
+    }
+});
+</script>
 
 <style type="text/css">code{white-space: pre;}</style>
 <style type="text/css">
@@ -2813,13 +2822,15 @@ div.tocify {
 </ul></li>
 <li>Datasets
 <ul>
-<li>Testing Data</li>
-<li>Training Data</li>
-<li>Full NC Data</li>
+<li>Testing Data (tst_data)</li>
+<li>Training Data (trn_data)</li>
+<li>Full NC Data (nc_data)</li>
 </ul></li>
 </ul>
-<pre class="r"><code>## load our package here
-devtools::load_all(&quot;../group3project&quot;)</code></pre>
+<pre class="r"><code>## load our package and datasets here
+devtools::load_all(&quot;../group3project&quot;)
+data(&quot;trn_data&quot;)
+data(&quot;tst_data&quot;)</code></pre>
 </div>
 <div id="data" class="section level1">
 <h1>Data</h1>
@@ -2973,7 +2984,7 @@ l(\alpha, \beta)&amp;= \sum_{i=1}^n\sum_{k=1}^3I(Y_i=k)log(P(Y_i=k))\\
 </div>
 <div id="downsampling" class="section level3">
 <h3>Downsampling</h3>
-<p>Since the levels of severity are not balanced, we also down-sampled the less severe outcomes to see if the predicted model improves in terms of accuracy and/or computation burden. We randomly sampled 1081 incidents from severity-1 incidents and 1081 incidents from severity-2 incidents, so that the three levels are balanced.</p>
+<p>Since the levels of severity are not balanced, we also down-sampled the less severe outcomes to see if the predicted model improves in terms of accuracy and/or computation burden. Since the minority class, severity-3, has 1081 incidents in the training set, we randomly sampled 1081 incidents from severity-1 incidents and 1081 incidents from severity-2 incidents, so that the three levels are balanced. Random Forest and Ordinal Forest were applied to this data.</p>
 </div>
 </div>
 <div id="evaluation-and-comparison-of-models" class="section level2">
@@ -2987,13 +2998,129 @@ l(\alpha, \beta)&amp;= \sum_{i=1}^n\sum_{k=1}^3I(Y_i=k)log(P(Y_i=k))\\
 </div>
 <div id="results" class="section level1">
 <h1>Results</h1>
-<p>Note that not all of the code is run in this markdown document due to compiling time.</p>
+<p>Note that not all of the code is run in this markdown document due to compiling time. If you’re interested in running the code for the forest-based methods, please see <strong>random_forest.R</strong> in the scripts folder of our <a href="https://github.com/kennyitang/BIOS735-Group3/tree/master/scripts">GitHub repository</a>.</p>
 <div id="proportional-odds-model-1" class="section level2">
 <h2>Proportional Odds Model</h2>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Proportional Odds and Ordinal Net Confusion Matrices
+</caption>
+<thead>
+<tr>
+<th style="border-bottom:hidden" colspan="1">
+</th>
+<th style="border-bottom:hidden; padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="3">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+Proportional Odds
+</div>
+</th>
+<th style="border-bottom:hidden; padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="3">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+Ordinal Net
+</div>
+</th>
+</tr>
+<tr>
+<th style="text-align:center;">
+Reference
+</th>
+<th style="text-align:center;">
+Predict1
+</th>
+<th style="text-align:center;">
+Predict2
+</th>
+<th style="text-align:center;">
+Predict3
+</th>
+<th style="text-align:center;">
+Predict.1
+</th>
+<th style="text-align:center;">
+Predict.2
+</th>
+<th style="text-align:center;">
+Predict.3
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center;">
+1
+</td>
+<td style="text-align:center;">
+33959
+</td>
+<td style="text-align:center;">
+2753
+</td>
+<td style="text-align:center;">
+0
+</td>
+<td style="text-align:center;">
+33906
+</td>
+<td style="text-align:center;">
+2806
+</td>
+<td style="text-align:center;">
+0
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+2
+</td>
+<td style="text-align:center;">
+813
+</td>
+<td style="text-align:center;">
+5207
+</td>
+<td style="text-align:center;">
+0
+</td>
+<td style="text-align:center;">
+753
+</td>
+<td style="text-align:center;">
+5267
+</td>
+<td style="text-align:center;">
+0
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+3
+</td>
+<td style="text-align:center;">
+543
+</td>
+<td style="text-align:center;">
+114
+</td>
+<td style="text-align:center;">
+0
+</td>
+<td style="text-align:center;">
+540
+</td>
+<td style="text-align:center;">
+117
+</td>
+<td style="text-align:center;">
+0
+</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="random-forest-1" class="section level2">
 <h2>Random Forest</h2>
-<p>RF Full Training Set</p>
+<div id="rf-full-training-data" class="section level4">
+<h4>RF Full Training Data</h4>
 <pre class="r"><code>#5-fold cross-validation
 cv_5 = trainControl(method = &quot;cv&quot;, number = 5)
 
@@ -3020,7 +3147,9 @@ varImpPlot(rf_mod_red$finalModel)
 
 #Obtain confusion matrix, accuracy, and kappa 
 confusionMatrix(predict(rf_mod_red, newdata = tst_data), tst_data$Severity_c)</code></pre>
-<p>OF Full Training Data</p>
+</div>
+<div id="of-full-training-data" class="section level4">
+<h4>OF Full Training Data</h4>
 <pre class="r"><code>#Prepare data
 datatrain = trn_data%&gt;% dplyr::select(Source, Side, `Temperature(F)`, `Humidity(%)`, `Pressure(in)`,
                                 `Visibility(mi)`, `Wind_Speed(mph)`, Crossing, Traffic_Signal,
@@ -3042,68 +3171,375 @@ preds &lt;- predict(ordforest, newdata = datatest)
 
 #Obtain confusion matrix, accuracy, and kappa 
 confusionMatrix(preds$ypred, datatest$Severity_c)</code></pre>
-<p>Downsampling Code</p>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+RF and OF Confusion Matrices
+</caption>
+<thead>
+<tr>
+<th style="border-bottom:hidden" colspan="1">
+</th>
+<th style="border-bottom:hidden; padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="3">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+Random Forest
+</div>
+</th>
+<th style="border-bottom:hidden; padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="3">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+Ordinal Forest
+</div>
+</th>
+</tr>
+<tr>
+<th style="text-align:center;">
+Reference
+</th>
+<th style="text-align:center;">
+Predict1
+</th>
+<th style="text-align:center;">
+Predict2
+</th>
+<th style="text-align:center;">
+Predict3
+</th>
+<th style="text-align:center;">
+Predict.1
+</th>
+<th style="text-align:center;">
+Predict.2
+</th>
+<th style="text-align:center;">
+Predict.3
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center;">
+1
+</td>
+<td style="text-align:center;">
+33838
+</td>
+<td style="text-align:center;">
+2849
+</td>
+<td style="text-align:center;">
+25
+</td>
+<td style="text-align:center;">
+33706
+</td>
+<td style="text-align:center;">
+2963
+</td>
+<td style="text-align:center;">
+43
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+2
+</td>
+<td style="text-align:center;">
+665
+</td>
+<td style="text-align:center;">
+5346
+</td>
+<td style="text-align:center;">
+9
+</td>
+<td style="text-align:center;">
+558
+</td>
+<td style="text-align:center;">
+5446
+</td>
+<td style="text-align:center;">
+16
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+3
+</td>
+<td style="text-align:center;">
+522
+</td>
+<td style="text-align:center;">
+94
+</td>
+<td style="text-align:center;">
+41
+</td>
+<td style="text-align:center;">
+458
+</td>
+<td style="text-align:center;">
+127
+</td>
+<td style="text-align:center;">
+72
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="downsampling-code" class="section level4">
+<h4>Downsampling Code</h4>
+<p>The following code creates a downsampled training data set from the original training data set, by taking a random sample, the size of the minority class, from the other two classes.</p>
 <pre class="r"><code>set.seed(12984)
 downsample.trn &lt;- trn_data[c(which(trn_data$Severity_c == 3),
                              sample(which(trn_data$Severity_c == 1), 1081), 
                              sample(which(trn_data$Severity_c == 2), 1081)),]</code></pre>
+<p>The same code that was used to train Random Forest and Ordinal Forest on the full training data was repeated on the Downsampled data.</p>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Down Sampled Confusion Matrices
+</caption>
+<thead>
+<tr>
+<th style="border-bottom:hidden" colspan="1">
+</th>
+<th style="border-bottom:hidden; padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="3">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+Random Forest
+</div>
+</th>
+<th style="border-bottom:hidden; padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="3">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+Ordinal Forest
+</div>
+</th>
+</tr>
+<tr>
+<th style="text-align:center;">
+Reference
+</th>
+<th style="text-align:center;">
+Predict1
+</th>
+<th style="text-align:center;">
+Predict2
+</th>
+<th style="text-align:center;">
+Predict3
+</th>
+<th style="text-align:center;">
+Predict.1
+</th>
+<th style="text-align:center;">
+Predict.2
+</th>
+<th style="text-align:center;">
+Predict.3
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center;">
+1
+</td>
+<td style="text-align:center;">
+32478
+</td>
+<td style="text-align:center;">
+2929
+</td>
+<td style="text-align:center;">
+1305
+</td>
+<td style="text-align:center;">
+1
+</td>
+<td style="text-align:center;">
+1
+</td>
+<td style="text-align:center;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+2
+</td>
+<td style="text-align:center;">
+201
+</td>
+<td style="text-align:center;">
+5433
+</td>
+<td style="text-align:center;">
+386
+</td>
+<td style="text-align:center;">
+1
+</td>
+<td style="text-align:center;">
+1
+</td>
+<td style="text-align:center;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+3
+</td>
+<td style="text-align:center;">
+20
+</td>
+<td style="text-align:center;">
+79
+</td>
+<td style="text-align:center;">
+558
+</td>
+<td style="text-align:center;">
+1
+</td>
+<td style="text-align:center;">
+1
+</td>
+<td style="text-align:center;">
+1
+</td>
+</tr>
+</tbody>
+</table>
+</div>
 </div>
 <div id="full-model-method-comparison" class="section level2">
 <h2>Full Model Method Comparison</h2>
 <p>The table below compares the 6 models built with all 12 predictors. We can see that the accuracy and Cohen’s Kappa values are very comparable between the four models built with the entire Training Dataset. These metrics are slightly worse for the down sampled models. This is likely because of the immense loss of information when we apply a strict down sampling approach to our very imbalanced data. The most interesting result here is the difference in time to train between the models.</p>
-<table>
-<caption>Model Performance</caption>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Model Performance
+</caption>
 <thead>
-<tr class="header">
-<th align="center">Method</th>
-<th align="center">Training_Set_Size</th>
-<th align="center">Accuracy</th>
-<th align="center">Kappa</th>
-<th align="center">Time</th>
+<tr>
+<th style="text-align:center;">
+Method
+</th>
+<th style="text-align:center;">
+Training_Set_Size
+</th>
+<th style="text-align:center;">
+Accuracy
+</th>
+<th style="text-align:center;">
+Kappa
+</th>
+<th style="text-align:center;">
+Time
+</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
-<td align="center">Proportional Odds</td>
-<td align="center">75887</td>
-<td align="center">0.903</td>
-<td align="center">0.6590</td>
-<td align="center">1.7 minutes</td>
+<tr>
+<td style="text-align:center;">
+Proportional Odds
+</td>
+<td style="text-align:center;">
+75887
+</td>
+<td style="text-align:center;">
+0.903
+</td>
+<td style="text-align:center;">
+0.6590
+</td>
+<td style="text-align:center;">
+1.7 minutes
+</td>
 </tr>
-<tr class="even">
-<td align="center">OrdinalNet</td>
-<td align="center">75887</td>
-<td align="center">0.903</td>
-<td align="center">0.6640</td>
-<td align="center">5.4 minutes</td>
+<tr>
+<td style="text-align:center;">
+OrdinalNet
+</td>
+<td style="text-align:center;">
+75887
+</td>
+<td style="text-align:center;">
+0.903
+</td>
+<td style="text-align:center;">
+0.6640
+</td>
+<td style="text-align:center;">
+5.4 minutes
+</td>
 </tr>
-<tr class="odd">
-<td align="center">Random Forest</td>
-<td align="center">75887</td>
-<td align="center">0.904</td>
-<td align="center">0.6696</td>
-<td align="center">11.5 minutes</td>
+<tr>
+<td style="text-align:center;">
+Random Forest
+</td>
+<td style="text-align:center;">
+75887
+</td>
+<td style="text-align:center;">
+0.904
+</td>
+<td style="text-align:center;">
+0.6696
+</td>
+<td style="text-align:center;">
+11.5 minutes
+</td>
 </tr>
-<tr class="even">
-<td align="center">Ordinal Forest</td>
-<td align="center">75887</td>
-<td align="center">0.904</td>
-<td align="center">0.6750</td>
-<td align="center">1.5 hours</td>
+<tr>
+<td style="text-align:center;">
+Ordinal Forest
+</td>
+<td style="text-align:center;">
+75887
+</td>
+<td style="text-align:center;">
+0.904
+</td>
+<td style="text-align:center;">
+0.6750
+</td>
+<td style="text-align:center;">
+1.5 hours
+</td>
 </tr>
-<tr class="odd">
-<td align="center">RF Down Sample</td>
-<td align="center">3243</td>
-<td align="center">0.887</td>
-<td align="center">0.6610</td>
-<td align="center">24 seconds</td>
+<tr>
+<td style="text-align:center;">
+RF Down Sample
+</td>
+<td style="text-align:center;">
+3243
+</td>
+<td style="text-align:center;">
+0.887
+</td>
+<td style="text-align:center;">
+0.6610
+</td>
+<td style="text-align:center;">
+24 seconds
+</td>
 </tr>
-<tr class="even">
-<td align="center">OF Down Sample</td>
-<td align="center">3243</td>
-<td align="center">0.886</td>
-<td align="center">0.6600</td>
-<td align="center">7 minutes</td>
+<tr>
+<td style="text-align:center;">
+OF Down Sample
+</td>
+<td style="text-align:center;">
+3243
+</td>
+<td style="text-align:center;">
+0.886
+</td>
+<td style="text-align:center;">
+0.6600
+</td>
+<td style="text-align:center;">
+7 minutes
+</td>
 </tr>
 </tbody>
 </table>
@@ -3138,6 +3574,121 @@ varImpPlot(rf_mod_red$finalModel)
 
 #Obtain confusion matrix, accuracy, and kappa 
 confusionMatrix(predict(rf_mod_red, newdata = tst_data), tst_data$Severity_c)</code></pre>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+RF Confusion Matrices with and without Source Predictor
+</caption>
+<thead>
+<tr>
+<th style="border-bottom:hidden" colspan="1">
+</th>
+<th style="border-bottom:hidden; padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="3">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+With Source
+</div>
+</th>
+<th style="border-bottom:hidden; padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="3">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+Without Source
+</div>
+</th>
+</tr>
+<tr>
+<th style="text-align:center;">
+Reference
+</th>
+<th style="text-align:center;">
+Predict1
+</th>
+<th style="text-align:center;">
+Predict2
+</th>
+<th style="text-align:center;">
+Predict3
+</th>
+<th style="text-align:center;">
+Predict.1
+</th>
+<th style="text-align:center;">
+Predict.2
+</th>
+<th style="text-align:center;">
+Predict.3
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center;">
+1
+</td>
+<td style="text-align:center;">
+33838
+</td>
+<td style="text-align:center;">
+2849
+</td>
+<td style="text-align:center;">
+25
+</td>
+<td style="text-align:center;">
+1
+</td>
+<td style="text-align:center;">
+1
+</td>
+<td style="text-align:center;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+2
+</td>
+<td style="text-align:center;">
+665
+</td>
+<td style="text-align:center;">
+5346
+</td>
+<td style="text-align:center;">
+9
+</td>
+<td style="text-align:center;">
+1
+</td>
+<td style="text-align:center;">
+1
+</td>
+<td style="text-align:center;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+3
+</td>
+<td style="text-align:center;">
+522
+</td>
+<td style="text-align:center;">
+94
+</td>
+<td style="text-align:center;">
+41
+</td>
+<td style="text-align:center;">
+1
+</td>
+<td style="text-align:center;">
+1
+</td>
+<td style="text-align:center;">
+1
+</td>
+</tr>
+</tbody>
+</table>
 <p>Second, we subset the processed training and testing data into two groups each: one with <code>Source = MapQuest</code> and one with <code>Source = Bing</code>. The few observations that were obtained from both APIs were dropped. Additionally, since only 8 observations from MapQuest had severity 3, those observations were dropped and the MapQuest model reduced to a two level outcome model.</p>
 <pre class="r"><code>bing.trn &lt;- trn_data[c(which(trn_data$Source == &quot;Bing&quot;)), ]
 bing.test &lt;- tst_data %&gt;% dplyr::filter(Source == &quot;Bing&quot;)
@@ -3189,6 +3740,109 @@ calc_acc(actual = tst_data$Severity_c, predicted = predict(rf_mod_red, newdata =
 
 # Confusion Matrix, has a lot of metrics including Kappa
 confusionMatrix(predict(rf_mod_red, newdata = mq.test), mq.test$Severity_c)</code></pre>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Source Specific Confusion Matrices
+</caption>
+<thead>
+<tr>
+<th style="border-bottom:hidden" colspan="1">
+</th>
+<th style="border-bottom:hidden; padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="3">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+Bing
+</div>
+</th>
+<th style="border-bottom:hidden; padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="2">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+MapQuest
+</div>
+</th>
+</tr>
+<tr>
+<th style="text-align:center;">
+Reference
+</th>
+<th style="text-align:center;">
+Predict1
+</th>
+<th style="text-align:center;">
+Predict2
+</th>
+<th style="text-align:center;">
+Predict3
+</th>
+<th style="text-align:center;">
+Predict.1
+</th>
+<th style="text-align:center;">
+Predict.2
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center;">
+1
+</td>
+<td style="text-align:center;">
+1314
+</td>
+<td style="text-align:center;">
+44
+</td>
+<td style="text-align:center;">
+30
+</td>
+<td style="text-align:center;">
+32460
+</td>
+<td style="text-align:center;">
+2820
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+2
+</td>
+<td style="text-align:center;">
+364
+</td>
+<td style="text-align:center;">
+20
+</td>
+<td style="text-align:center;">
+13
+</td>
+<td style="text-align:center;">
+267
+</td>
+<td style="text-align:center;">
+5329
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+3
+</td>
+<td style="text-align:center;">
+487
+</td>
+<td style="text-align:center;">
+26
+</td>
+<td style="text-align:center;">
+63
+</td>
+<td style="text-align:center;">
+.
+</td>
+<td style="text-align:center;">
+.
+</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 <div id="discussion" class="section level1">

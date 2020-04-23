@@ -14,6 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(png)
 library(grid)
+library(kableExtra)
 ```
 
 # Introduction 
@@ -42,13 +43,15 @@ Our R package `group3project` contains the functions needed to fit a proportiona
     + calc_acc: calculates accuracy of classification
 
 * Datasets 
-    + Testing Data 
-    + Training Data
-    + Full NC Data
+    + Testing Data (tst_data)
+    + Training Data (trn_data)
+    + Full NC Data (nc_data)
 
 ```{r, message = FALSE}
-## load our package here
+## load our package and datasets here
 devtools::load_all("../group3project")
+data("trn_data")
+data("tst_data")
 ```
 
 # Data
@@ -213,8 +216,7 @@ We implement the random forest method directly from the `caret` package in R for
 It should be noted however, that the typical random forest classifier does not account for the fact that the classes are ordinal (i.e. class 1 is "closer" to class 2 than class 3). Therefore, it is of interest to explore a machine learning algorithm that can account for this. The R package `ordinalForest` does just that. We use the model with default hyperparameters on our data and compare to the traditional random forest and the proportional odds model.
 
 ### Downsampling
-Since the levels of severity are not balanced, we also down-sampled the less severe outcomes to see if the predicted model improves in terms of accuracy and/or computation burden. We randomly sampled 1081 incidents from severity-1 incidents and 1081 incidents from severity-2 incidents, so that the three levels are balanced.
-
+Since the levels of severity are not balanced, we also down-sampled the less severe outcomes to see if the predicted model improves in terms of accuracy and/or computation burden. Since the minority class, severity-3, has 1081 incidents in the training set, we randomly sampled 1081 incidents from severity-1 incidents and 1081 incidents from severity-2 incidents, so that the three levels are balanced. Random Forest and Ordinal Forest were applied to this data. 
 
 ## Evaluation and Comparison of Models
 
@@ -230,7 +232,7 @@ And finally, for a more visual comparison, we can look at the **Confusion Matrix
 
 # Results 
 
-Note that not all of the code is run in this markdown document due to compiling time.
+Note that not all of the code is run in this markdown document due to compiling time. If you’re interested in running the code for the forest-based methods, please see **random_forest.R** in the scripts folder of our [GitHub repository](https://github.com/kennyitang/BIOS735-Group3/tree/master/scripts). 
 
 ## Proportional Odds Model
 ```{r}
@@ -238,9 +240,24 @@ Note that not all of the code is run in this markdown document due to compiling 
 
 ```
 
+```{r, echo = FALSE}
+# create table  
+down_df <- data.frame(Reference = c("1", "2", "3"), 
+                       Predict1 = c(33959, 813, 543), 
+                       Predict2 = c(2753, 5207, 114), 
+                       Predict3 = c(0,0,0), 
+                       Predict.1 = c(33906, 753, 540), 
+                       Predict.2 = c(2806, 5267, 117), 
+                       Predict.3 = c(0, 0, 0))
+knitr::kable(down_df, align = 'cccc', caption = "Proportional Odds and Ordinal Net Confusion Matrices", 
+             booktabs=T) %>% 
+  add_header_above(c("", "Proportional Odds" = 3, "Ordinal Net" = 3)) %>%
+kable_styling(latex_options = c("repeat_header", "scale_down"))
+```
+
 ## Random Forest
 
-RF Full Training Set
+#### RF Full Training Data
 
 ```{r, eval = FALSE}
 #5-fold cross-validation
@@ -271,7 +288,7 @@ varImpPlot(rf_mod_red$finalModel)
 confusionMatrix(predict(rf_mod_red, newdata = tst_data), tst_data$Severity_c)
 ```
 
-OF Full Training Data 
+#### OF Full Training Data 
 
 ```{r, eval = FALSE}
 #Prepare data
@@ -297,7 +314,24 @@ preds <- predict(ordforest, newdata = datatest)
 confusionMatrix(preds$ypred, datatest$Severity_c)
 ```
 
-Downsampling Code 
+```{r, echo = FALSE}
+# create table  
+down_df <- data.frame(Reference = c("1", "2", "3"), 
+                       Predict1 = c(33838, 665, 522), 
+                       Predict2 = c(2849, 5346, 94), 
+                       Predict3 = c(25, 9, 41), 
+                       Predict.1 = c(33706, 558, 458), 
+                       Predict.2 = c(2963, 5446, 127), 
+                       Predict.3 = c(43, 16, 72))
+knitr::kable(down_df, align = 'cccc', caption = "RF and OF Confusion Matrices", 
+             booktabs=T) %>% 
+  add_header_above(c("", "Random Forest" = 3, "Ordinal Forest" = 3)) %>%
+kable_styling(latex_options = c("repeat_header", "scale_down"))
+```
+
+#### Downsampling Code 
+
+The following code creates a downsampled training data set from the original training data set, by taking a random sample, the size of the minority class, from the other two classes.
 
 ```{r, eval = FALSE}
 set.seed(12984)
@@ -306,18 +340,36 @@ downsample.trn <- trn_data[c(which(trn_data$Severity_c == 3),
                              sample(which(trn_data$Severity_c == 2), 1081)),]
 ```
 
+The same code that was used to train Random Forest and Ordinal Forest on the full training data was repeated on the Downsampled data. 
+
+```{r, echo = FALSE}
+# create table  
+down_df <- data.frame(Reference = c("1", "2", "3"), 
+                       Predict1 = c(32478, 201, 20), 
+                       Predict2 = c(2929, 5433, 79), 
+                       Predict3 = c(1305, 386, 558), 
+                       Predict.1 = c(1, 1, 1), 
+                       Predict.2 = c(1, 1, 1), 
+                       Predict.3 = c(1, 1, 1))
+knitr::kable(down_df, align = 'cccc', caption = "Down Sampled Confusion Matrices", 
+             booktabs=T) %>% 
+  add_header_above(c("", "Random Forest" = 3, "Ordinal Forest" = 3)) %>%
+kable_styling(latex_options = c("repeat_header", "scale_down"))
+```
+
 ## Full Model Method Comparison 
 
 The table below compares the 6 models built with all 12 predictors. We can see that the accuracy and Cohen's Kappa values are very comparable between the four models built with the entire Training Dataset. These metrics are slightly worse for the down sampled models. This is likely because of the immense loss of information when we apply a strict down sampling approach to our very imbalanced data. The most interesting result here is the difference in time to train between the models. 
 
 ```{r, echo = FALSE}
-# create table from powerpoint 
+# create table  
 table_df <- data.frame(Method = c("Proportional Odds", "OrdinalNet", "Random Forest", "Ordinal Forest", "RF Down Sample", "OF Down Sample"), 
                        Training_Set_Size = c(rep(75887,4), rep(3243, 2)), 
                        Accuracy = c(0.903, .903, .904, .904, 0.887, 0.886), 
                        Kappa = c(0.659, 0.664, 0.6696, 0.675, 0.661, 0.660), 
                        Time = c("1.7 minutes", "5.4  minutes", "11.5 minutes", "1.5 hours", "24 seconds", "7 minutes"))
-knitr::kable(table_df, align = 'ccccc', caption = "Model Performance")
+knitr::kable(table_df, align = 'ccccc', caption = "Model Performance", booktabs = TRUE) %>%
+kable_styling(latex_options = c("repeat_header", "scale_down"))
 ```
 
 ## Source Specific Modeling 
@@ -352,6 +404,21 @@ varImpPlot(rf_mod_red$finalModel)
 
 #Obtain confusion matrix, accuracy, and kappa 
 confusionMatrix(predict(rf_mod_red, newdata = tst_data), tst_data$Severity_c)
+```
+
+```{r, echo = FALSE}
+# create table  
+down_df <- data.frame(Reference = c("1", "2", "3"), 
+                       Predict1 = c(33838, 665, 522), 
+                       Predict2 = c(2849, 5346, 94), 
+                       Predict3 = c(25, 9, 41), 
+                       Predict.1 = c(1, 1, 1), 
+                       Predict.2 = c(1, 1, 1), 
+                       Predict.3 = c(1, 1, 1))
+knitr::kable(down_df, align = 'cccc', caption = "RF Confusion Matrices with and without Source Predictor", 
+             booktabs=T) %>% 
+  add_header_above(c("", "With Source" = 3, "Without Source" = 3)) %>%
+kable_styling(latex_options = c("repeat_header", "scale_down"))
 ```
 
 Second, we subset the processed training and testing data into two groups each: one with `Source = MapQuest` and one with `Source = Bing`. The few observations that were obtained from both APIs were dropped. Additionally, since only 8 observations from MapQuest had severity 3, those observations were dropped and the MapQuest model reduced to a two level outcome model.
@@ -416,6 +483,19 @@ calc_acc(actual = tst_data$Severity_c, predicted = predict(rf_mod_red, newdata =
 confusionMatrix(predict(rf_mod_red, newdata = mq.test), mq.test$Severity_c)
 ```
 
+```{r, echo = FALSE}
+# create table  
+down_df <- data.frame(Reference = c("1", "2", "3"), 
+                       Predict1 = c(1314, 364, 487), 
+                       Predict2 = c(44, 20, 26), 
+                       Predict3 = c(30, 13, 63), 
+                       Predict.1 = c(32460, 267, "."), 
+                       Predict.2 = c(2820, 5329, "."))
+knitr::kable(down_df, align = 'cccc', caption = "Source Specific Confusion Matrices", 
+             booktabs=T) %>% 
+  add_header_above(c("", "Bing" = 3, "MapQuest" = 2)) %>%
+kable_styling(latex_options = c("repeat_header", "scale_down"))
+```
 
 # Discussion 
 
