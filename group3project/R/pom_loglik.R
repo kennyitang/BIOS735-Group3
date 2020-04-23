@@ -1,7 +1,8 @@
-#' POM likelihood, reference Woodridge (2002, p656)
+#' POM likelihood
 #' 
 #' This function returns the log likelihood of the ordered logit model, allowing
-#' an arbitrary number of J ordered response categories (J>2)
+#' an arbitrary number of J ordered response categories (J>2), referencing Woodridge (2002, p656).
+#' 
 #' 
 #' @param x a N x P data matrix, with no intercept, where categorical variables will have been coded into indicator variables
 #' @param y a vector of ordered factor responses with J levels

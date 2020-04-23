@@ -2,7 +2,7 @@
 % Please edit documentation in R/pom_loglik.R
 \name{loglik.pom}
 \alias{loglik.pom}
-\title{POM likelihood, reference Woodridge (2002, p656)}
+\title{POM likelihood}
 \usage{
 loglik.pom(y, X, param)
 }
@@ -18,7 +18,7 @@ the log likelihood of proportional odds model
 }
 \description{
 This function returns the log likelihood of the ordered logit model, allowing
-an arbitrary number of J ordered response categories (J>2)
+an arbitrary number of J ordered response categories (J>2), referencing Woodridge (2002, p656).
 }
 \examples{
 
