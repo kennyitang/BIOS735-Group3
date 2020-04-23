@@ -3353,13 +3353,13 @@ Predict.3
 1305
 </td>
 <td style="text-align:center;">
-1
+32456
 </td>
 <td style="text-align:center;">
-1
+2911
 </td>
 <td style="text-align:center;">
-1
+1345
 </td>
 </tr>
 <tr>
@@ -3376,13 +3376,13 @@ Predict.3
 386
 </td>
 <td style="text-align:center;">
-1
+201
 </td>
 <td style="text-align:center;">
-1
+5426
 </td>
 <td style="text-align:center;">
-1
+393
 </td>
 </tr>
 <tr>
@@ -3399,13 +3399,13 @@ Predict.3
 558
 </td>
 <td style="text-align:center;">
-1
+11
 </td>
 <td style="text-align:center;">
-1
+79
 </td>
 <td style="text-align:center;">
-1
+567
 </td>
 </tr>
 </tbody>
@@ -3632,13 +3632,13 @@ Predict.3
 25
 </td>
 <td style="text-align:center;">
-1
+34300
 </td>
 <td style="text-align:center;">
-1
+2247
 </td>
 <td style="text-align:center;">
-1
+165
 </td>
 </tr>
 <tr>
@@ -3655,10 +3655,10 @@ Predict.3
 9
 </td>
 <td style="text-align:center;">
-1
+2364
 </td>
 <td style="text-align:center;">
-1
+3655
 </td>
 <td style="text-align:center;">
 1
@@ -3678,13 +3678,13 @@ Predict.3
 41
 </td>
 <td style="text-align:center;">
-1
+530
 </td>
 <td style="text-align:center;">
-1
+127
 </td>
 <td style="text-align:center;">
-1
+0
 </td>
 </tr>
 </tbody>
@@ -3699,47 +3699,7 @@ mq.test &lt;- tst_data %&gt;% dplyr::filter(Source == &quot;MapQuest&quot; &amp;
 mq.test$Severity_c &lt;- droplevels(mq.test$Severity_c)
 mq.trn$Severity_c &lt;- droplevels(mq.trn$Severity_c)
 table(mq.trn$Severity_c)</code></pre>
-<pre class="r"><code>set.seed(3)
-start = Sys.time()
-rf_mod_red = train(
-  Severity_c ~ Side + `Temperature(F)` + `Humidity(%)` + `Pressure(in)` + 
-    `Visibility(mi)` + `Wind_Speed(mph)` + Crossing + Traffic_Signal +
-    Sunrise_Sunset + weekday + interstate, 
-  data = bing.trn, 
-  method = &quot;rf&quot;,
-  trControl = cv_5,
-  tuneGrid = rf_grid
-)
-end = Sys.time()
-print(end - start)
-
-varImpPlot(rf_mod_red$finalModel)
-
-# Confusion Matrix, has a lot of metrics including Kappa
-confusionMatrix(predict(rf_mod_red, newdata = bing.test), bing.test$Severity_c)</code></pre>
-<pre class="r"><code>set.seed(3)
-start = Sys.time()
-rf_mod_red = train(
-  Severity_c ~ Side + `Temperature(F)` + `Humidity(%)` + `Pressure(in)` + 
-    `Visibility(mi)` + `Wind_Speed(mph)` + Crossing + Traffic_Signal +
-    Sunrise_Sunset + weekday + interstate, 
-  data = mq.trn, 
-  method = &quot;rf&quot;,
-  trControl = cv_5,
-  tuneGrid = rf_grid
-)
-end = Sys.time()
-print(end - start)
-
-rf_mod_red$results
-rf_mod_red$bestTune
-varImp(rf_mod_red)
-varImpPlot(rf_mod_red$finalModel)
-#Obtain test accuracy
-calc_acc(actual = tst_data$Severity_c, predicted = predict(rf_mod_red, newdata = tst_data))
-
-# Confusion Matrix, has a lot of metrics including Kappa
-confusionMatrix(predict(rf_mod_red, newdata = mq.test), mq.test$Severity_c)</code></pre>
+<p>The same code that was used to train Random Forest on the full training data was repeated on the source specific data.</p>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
 Source Specific Confusion Matrices

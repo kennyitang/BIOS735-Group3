@@ -348,9 +348,9 @@ down_df <- data.frame(Reference = c("1", "2", "3"),
                        Predict1 = c(32478, 201, 20), 
                        Predict2 = c(2929, 5433, 79), 
                        Predict3 = c(1305, 386, 558), 
-                       Predict.1 = c(1, 1, 1), 
-                       Predict.2 = c(1, 1, 1), 
-                       Predict.3 = c(1, 1, 1))
+                       Predict.1 = c(32456, 201, 11), 
+                       Predict.2 = c(2911, 5426, 79), 
+                       Predict.3 = c(1345, 393, 567))
 knitr::kable(down_df, align = 'cccc', caption = "Down Sampled Confusion Matrices", 
              booktabs=T) %>% 
   add_header_above(c("", "Random Forest" = 3, "Ordinal Forest" = 3)) %>%
@@ -412,9 +412,9 @@ down_df <- data.frame(Reference = c("1", "2", "3"),
                        Predict1 = c(33838, 665, 522), 
                        Predict2 = c(2849, 5346, 94), 
                        Predict3 = c(25, 9, 41), 
-                       Predict.1 = c(1, 1, 1), 
-                       Predict.2 = c(1, 1, 1), 
-                       Predict.3 = c(1, 1, 1))
+                       Predict.1 = c(34300, 2364, 530), 
+                       Predict.2 = c(2247, 3655, 127), 
+                       Predict.3 = c(165, 1, 0))
 knitr::kable(down_df, align = 'cccc', caption = "RF Confusion Matrices with and without Source Predictor", 
              booktabs=T) %>% 
   add_header_above(c("", "With Source" = 3, "Without Source" = 3)) %>%
@@ -435,53 +435,7 @@ mq.trn$Severity_c <- droplevels(mq.trn$Severity_c)
 table(mq.trn$Severity_c)
 ```
 
-```{r, eval = FALSE}
-set.seed(3)
-start = Sys.time()
-rf_mod_red = train(
-  Severity_c ~ Side + `Temperature(F)` + `Humidity(%)` + `Pressure(in)` + 
-    `Visibility(mi)` + `Wind_Speed(mph)` + Crossing + Traffic_Signal +
-    Sunrise_Sunset + weekday + interstate, 
-  data = bing.trn, 
-  method = "rf",
-  trControl = cv_5,
-  tuneGrid = rf_grid
-)
-end = Sys.time()
-print(end - start)
-
-varImpPlot(rf_mod_red$finalModel)
-
-# Confusion Matrix, has a lot of metrics including Kappa
-confusionMatrix(predict(rf_mod_red, newdata = bing.test), bing.test$Severity_c)
-```
-
-```{r, eval = FALSE}
-
-set.seed(3)
-start = Sys.time()
-rf_mod_red = train(
-  Severity_c ~ Side + `Temperature(F)` + `Humidity(%)` + `Pressure(in)` + 
-    `Visibility(mi)` + `Wind_Speed(mph)` + Crossing + Traffic_Signal +
-    Sunrise_Sunset + weekday + interstate, 
-  data = mq.trn, 
-  method = "rf",
-  trControl = cv_5,
-  tuneGrid = rf_grid
-)
-end = Sys.time()
-print(end - start)
-
-rf_mod_red$results
-rf_mod_red$bestTune
-varImp(rf_mod_red)
-varImpPlot(rf_mod_red$finalModel)
-#Obtain test accuracy
-calc_acc(actual = tst_data$Severity_c, predicted = predict(rf_mod_red, newdata = tst_data))
-
-# Confusion Matrix, has a lot of metrics including Kappa
-confusionMatrix(predict(rf_mod_red, newdata = mq.test), mq.test$Severity_c)
-```
+The same code that was used to train Random Forest on the full training data was repeated on the source specific data. 
 
 ```{r, echo = FALSE}
 # create table  
