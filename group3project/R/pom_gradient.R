@@ -1,21 +1,22 @@
-#' POM gradient
+#' Gradient function for proportional odds model
 #' 
-#' This function returns the gradient of the ordered logit model log likelihood, allowing
-#' an arbitrary number of J ordered response categories (J>2)
+#' This function returns the gradient of log likelihood of the proportional odds model, allowing for
+#' an arbitrary number of J ordered response categories (J>2).
 #' 
-#' @param x a N x P data matrix, with no intercept, where categorical variables will have been coded into dummy variables
-#' @param y a vector of ordered factor responses with J levels
-#' @param param initial values of the alpha and beta parameters of length (J-1+P)
+#' @param x a N x P data matrix, with no intercept, where categorical variables need to be coded into dummy variables.
+#' @param y a vector of ordered factor responses with J levels.
+#' @param param curent values of the alpha and beta parameters of length (J-1+P).
 #'
-#' @return the gradient of te log likelihood of proportional odds model
+#' @return The gradient of the log likelihood of proportional odds model.
 #' 
 #' @examples
-#'
-#' gradient.pom(c(a_vec, beta_vec), y, X)
+#' Given y, X, and the current values of alpha and beta, the gradient of a proportional odds model 
+#' at a specific interation can be calculated as:
+#' gradient.pom(c(alpha_vec, beta_vec), y, X)
 #'
 
 gradient.pom = function(param, y, X){
-  #columne vector of p*1, p = # of beta + # of a
+  #column vector of length p, p = # of beta + # of a
   a_vec = param[1:(length(unique(y)) - 1)]
   beta = param[-(1:length(unique(y)) - 1)]
   

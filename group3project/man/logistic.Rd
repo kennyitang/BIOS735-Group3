@@ -7,7 +7,7 @@
 logistic(t)
 }
 \arguments{
-\item{t}{a real number or a real-numbered vector.}
+\item{t}{a number or a numeric vector.}
 }
 \value{
 The transformed t.
