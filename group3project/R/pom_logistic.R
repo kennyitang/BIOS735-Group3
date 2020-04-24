@@ -1,13 +1,17 @@
+#' Standard logistic function
 #' 
-#' This is the logistic function to transform the linear function into the (0,1) range 
+#' This is the standard logistic function to transform real numbers into the (0,1) range.
 #' 
-#' @param t a linear function
+#' The standard logistic function is given by f(t) = 1 / (1 + exp(-t)). 
 #' 
-#' @return the logistic function
+#' @param t a number or a numeric vector.
+#' 
+#' @return The transformed t.
 #' 
 #' @examples
-#'
-#' logistic( a + X %*% beta)
+#' For a logistic regression model, the estimated probability of an event associated 
+#' with covariates Xi can be calculated as:
+#' logistic(a + Xi %*% beta_hat)
 #'
 #' 
 

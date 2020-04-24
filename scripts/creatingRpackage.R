@@ -26,4 +26,5 @@ library(group3project)
 #load_all()
 test_file("group3project/tests/testthat/test-calc_acc.R")
 test_file("group3project/tests/testthat/test-pom.est.R")
+test_file("group3project/tests/testthat/test-logistic.R")
 test_package("group3project") # run all tests in package

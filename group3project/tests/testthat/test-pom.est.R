@@ -1,8 +1,7 @@
 set.seed(2)
 dat = data.frame(y = sample(1:5, 100, replace=TRUE, prob = rep(0.2, 5)),
                  x1 = sample(c("a", "b", "c"), 100, replace=TRUE), 
-                 x2 = rnorm(100, 0, 200),
-                 x3 = c(rnorm(50, 3, 0.005), rnorm(50, -3, 0.5)))
+                 x2 = rnorm(100, 0, 200))
 
 
 test_that("actual and predicted have the same dimension", {
@@ -16,7 +15,6 @@ test_that("X not scaled", {
 })
 
 dat$x2 = scale(dat$x2)
-dat$x3 = scale(dat$x3)
 
 test_that("Estimates close to that produced by polr",{
   fit1 = pom.est(y ~ x1 + x2, data=dat)

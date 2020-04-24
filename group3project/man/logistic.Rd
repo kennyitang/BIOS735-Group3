@@ -2,22 +2,26 @@
 % Please edit documentation in R/pom_logistic.R
 \name{logistic}
 \alias{logistic}
-\title{This is the logistic function to transform the linear function into the (0,1) range}
+\title{Standard logistic function}
 \usage{
 logistic(t)
 }
 \arguments{
-\item{t}{a linear function}
+\item{t}{a real number or a real-numbered vector.}
 }
 \value{
-the logistic function
+The transformed t.
 }
 \description{
-This is the logistic function to transform the linear function into the (0,1) range
+This is the standard logistic function to transform real numbers into the (0,1) range.
+}
+\details{
+The standard logistic function is given by f(t) = 1 / (1 + exp(-t)).
 }
 \examples{
-
-logistic( a + X \%*\% beta)
+For a logistic regression model, the estimated probability of an event associated 
+with covariates Xi can be calculated as:
+logistic(a + Xi \%*\% beta_hat)
 
 
 }
