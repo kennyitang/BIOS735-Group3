@@ -8,10 +8,10 @@
 #' after recoding categorical variables into indicator variables. The function only accept ordered factor as the response variable type.
 #' The function will check KKT optimality conditions for the second derivative, and the output will suggest that continuous predictors be scaled first, if necessary, 
 #' in order to stablize the Hessian matrix approximation.
-#' @param SE Option to give standard error output
-#' @param details Option to give detailed optim outcome
+#' @param SE logical; if TRUE, ouputs standard error
+#' @param details logical; if TRUE, gives detailed optim outcome
 #'
-#' @return a coefficient estimate matrix and optionally the SE with P + J - 1 rows, with J being the response category.
+#' @return A coefficient estimate matrix and optionally the SE with P + J - 1 rows, with J being the number of response categories.
 #' 
 #' @examples
 #'

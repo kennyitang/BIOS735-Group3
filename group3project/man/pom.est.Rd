@@ -14,12 +14,12 @@ after recoding categorical variables into indicator variables. The function only
 The function will check KKT optimality conditions for the second derivative, and the output will suggest that continuous predictors be scaled first, if necessary, 
 in order to stablize the Hessian matrix approximation.}
 
-\item{SE}{Option to give standard error output}
+\item{SE}{logical; if TRUE, ouputs standard error}
 
-\item{details}{Option to give detailed optim outcome}
+\item{details}{logical; if TRUE, gives detailed optim outcome}
 }
 \value{
-a coefficient estimate matrix and optionally the SE with P + J - 1 rows, with J being the response category.
+A coefficient estimate matrix and optionally the SE with P + J - 1 rows, with J being the number of response categories.
 }
 \description{
 This function returns the intercept and coefficient estimates of the ordered logit model, allowing
