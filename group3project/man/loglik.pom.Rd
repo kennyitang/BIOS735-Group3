@@ -2,27 +2,28 @@
 % Please edit documentation in R/pom_loglik.R
 \name{loglik.pom}
 \alias{loglik.pom}
-\title{POM likelihood}
+\title{Log likelihood of proportional odds model}
 \usage{
 loglik.pom(y, X, param)
 }
 \arguments{
-\item{y}{a vector of ordered factor responses with J levels}
+\item{y}{a vector of ordered factor responses with J levels.}
 
-\item{param}{initial values of the alpha and beta parameters of length (J-1+P)}
+\item{param}{current values of the alpha and beta parameters of length (J-1+P).}
 
-\item{x}{a N x P data matrix, with no intercept, where categorical variables will have been coded into indicator variables}
+\item{x}{a N x P data matrix, with no intercept, where categorical variables need to be coded into indicator variables.}
 }
 \value{
-the log likelihood of proportional odds model
+The log likelihood of proportional odds model.
 }
 \description{
-This function returns the log likelihood of the ordered logit model, allowing
+This function returns the log likelihood of the proportional odds model, allowing
 an arbitrary number of J ordered response categories (J>2), referencing Woodridge (2002, p656).
 }
 \examples{
-
-loglike.pom(y, X, c(a_vec, beta_vec))
+Given y, X, and the current values of alpha and beta, the log likelihood of a proportional odds model 
+at a specific interation can be calculated as:
+loglike.pom(y, X, c(alpha, beta))
 
 
 }

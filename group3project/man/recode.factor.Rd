@@ -2,25 +2,27 @@
 % Please edit documentation in R/pom_recode.R
 \name{recode.factor}
 \alias{recode.factor}
-\title{POM gradient}
+\title{Create a design matrix without intercept}
 \usage{
 recode.factor(formula, data)
 }
 \arguments{
-\item{formula}{a formula object connected by "~", using the column names of the data matrix}
+\item{formula}{a formula object connected by "~", using the column names of the data matrix.}
 
-\item{data}{N x C data matrix without intercept. C is the number of variables}
+\item{data}{N x C data matrix without intercept. C is the number of variables.}
 }
 \value{
-the model matrix coded with indicator variables and without intercepts.
+The model matrix coded with indicator variables and without intercepts.
 }
 \description{
-This function spans the data matrix according to the user input formula and removes the intercept, as intercepts
-are modeled in the likelihood.
-It uses the built in model.matrix function so that logical and string variables are converted to indicator variables.
+This function spans the data matrix according to the user input formula and removes the default intercept, 
+as response-specific intercepts are supplied in the \code{loglik.pom} function.
+}
+\details{
+It uses the built-in \code{model.matrix} function so that logical and string variables are converted to indicator variables.
 }
 \examples{
-
+#'
 X2 = recode.factor(Severity_c ~ Source + Traffic_Signal + Sunrise_Sunset + weekday + interstate, data = tst_data)
 
 

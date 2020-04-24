@@ -11,7 +11,7 @@ gradient.pom(param, y, X)
 
 \item{y}{a vector of ordered factor responses with J levels.}
 
-\item{x}{a N x P data matrix, with no intercept, where categorical variables need to be coded into dummy variables.}
+\item{x}{a N x P data matrix, with no intercept, where categorical variables need to be coded into indicator variables.}
 }
 \value{
 The gradient of the log likelihood of proportional odds model.
@@ -23,6 +23,6 @@ an arbitrary number of J ordered response categories (J>2).
 \examples{
 Given y, X, and the current values of alpha and beta, the gradient of a proportional odds model 
 at a specific interation can be calculated as:
-gradient.pom(c(alpha_vec, beta_vec), y, X)
+gradient.pom(c(alpha, beta), y, X)
 
 }

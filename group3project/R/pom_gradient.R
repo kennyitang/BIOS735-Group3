@@ -3,7 +3,7 @@
 #' This function returns the gradient of log likelihood of the proportional odds model, allowing for
 #' an arbitrary number of J ordered response categories (J>2).
 #' 
-#' @param x a N x P data matrix, with no intercept, where categorical variables need to be coded into dummy variables.
+#' @param x a N x P data matrix, with no intercept, where categorical variables need to be coded into indicator variables.
 #' @param y a vector of ordered factor responses with J levels.
 #' @param param curent values of the alpha and beta parameters of length (J-1+P).
 #'
@@ -12,7 +12,7 @@
 #' @examples
 #' Given y, X, and the current values of alpha and beta, the gradient of a proportional odds model 
 #' at a specific interation can be calculated as:
-#' gradient.pom(c(alpha_vec, beta_vec), y, X)
+#' gradient.pom(c(alpha, beta), y, X)
 #'
 
 gradient.pom = function(param, y, X){
