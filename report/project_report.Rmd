@@ -7,6 +7,7 @@ output:
     df_print: paged
     toc: yes
     toc_float: true
+    theme: journal
 ---
 
 ```{r setup, include=FALSE}
@@ -19,13 +20,17 @@ library(kableExtra)
 
 # Introduction 
 
-Sitting in traffic is not ideal for anyone, and it is especially frustrating when the traffic is caused by an accident. It is an unexpected delay, and many times it is completely uncertain how long the delay will last. Moreso, traffic accidents pose a big problem for public safety. Traffic accident data can be an invaluble resource, as it can provide information that can potentially aid in predicting conditions where accidents are prone to happen so steps can be taken to prevent the accident. Further, this data could be useful in predicting how severely an accident will delay the drivers following the accident so steps can be taken to reduce this delay as needed. 
+Sitting in traffic is not ideal for anyone, and it is especially frustrating when the traffic is caused by an accident. It is an unexpected delay, and many times it is completely uncertain how long the delay will last.  For a country where the majority of the population relies so heavily on automobiles for daily transportation, traffic delays may result in a multitude of disruptions in many other aspects of life as well.  
 
-Several computer scientists from the Ohio State University present exactly this: a dataset of traffic accidents from the contiguous United States, covering 2.95 million accidents with data collected between February 2016 and December 2019. As of March 2019, of the 49 states included, North Carolina had the fourth highest number of accidents in the dataset at 109,000 [1]. Because of the wide range of attributes collected with each accident in the dataset, this has the potential to provide the information needed to start making decisions about how to prevent accidents and the delays associated.
+Not only is sitting traffic frustrating, but the resulting air pollution and long-term exposure to vehicle emissions may also be associated with future health and respiratory issues.<sup>[5]</sup>  Moreover, traffic accidents pose a big problem for public safety. In many studies, traffic congestion has been considered a potentially important factor impacting the occurrence of accidents,<sup>[6]</sup> suggesting that the severity of a traffic delay caused by one accident may influence the likelihood of a secondary accident.
+
+Traffic accident data can therefore be an invaluable resource, as it can provide information that can potentially aid in predicting conditions where traffic accidents are prone to happen, so that steps can be taken to prevent the accident. Further, this data could also be useful in predicting how severely an accident will delay the drivers following the accident, so that steps can be taken to reduce this delay as needed. 
+
+Several computer scientists from the Ohio State University present exactly this: a dataset of traffic accidents from the contiguous United States, covering 2.95 million accidents with data collected between February 2016 and December 2019. As of March 2019, of the 49 states included, North Carolina had the fourth highest number of accidents in the dataset at 109,000. <sup>[1]</sup> Because of the wide range of attributes collected with each accident in the dataset, this dataset has the potential to provide the information needed to start making decisions about how to mitigate traffic accidents and the delays associated.
 
 # Project Aim 
 
-The aim of this project is to use Car Accident Data from North Carolina in 2016-2018 to determine which factors have the most influence on the severity of car accidents in the state. We take two different approaches to construct models to predict the severity of car accidents, one through proportional odds model and one through machine learning. We then use the 2019 data to evaluate and compare the performance of our prediction models.
+The aim of this project is to use Car Accident Data from North Carolina in 2016-2018 to determine which factors have the most influence on the severity of car accidents in the state. We take two different approaches to construct models to predict the severity of car accidents, one through a proportional odds model and the other through machine learning. We then use the 2019 data to evaluate and compare the performance of our prediction models.
 
 # R-Package
 
@@ -55,7 +60,7 @@ data("tst_data")
 ```
 
 # Data
-The original dataset had 49 total attributes, including attributes related to traffic, location, weather, points of interest, and period of day.  Pre-processing the data set was necessary to allow us to focus on the variables and observations of real relevance to our aim. Although we started out with 48 dependent variables and one outcome variable, there were several reasons for removing most of the attributes, including:  
+The original dataset had 49 total attributes, including attributes related to traffic, location, weather, points of interest, and time of day.  Pre-processing the data set was necessary to allow us to focus on the variables and observations of real relevance to our aim. Although we started out with 48 dependent variables and one outcome variable, there were several reasons for removing most of the attributes, including:  
 
 1. The attribute had at least 60% missingness.
     + Wind Chill and Precipitation
@@ -528,6 +533,10 @@ The Car Accidents data set for North Carolina and the derived training and test 
 [3] Bing documentation on traffic incident data: https://docs.microsoft.com/en-us/bingmaps/rest-services/traffic/traffic-incident-data
    
 [4] MapQuest documentation on traffic incident data: https://developer.mapquest.com/documentation/traffic-api/incidents/get/#response_field-severity
+
+[5] Levy, J.I., Buonocore, J.J. & von Stackelberg, K. Evaluation of the public health impacts of traffic congestion: a health risk assessment. Environ Health 9, 65 (2010). https://doi.org/10.1186/1476-069X-9-65
+
+[6] Retallack, A. E., & Ostendorf, B. (2019). Current Understanding of the Effects of Congestion on Traffic Accidents. International journal of environmental research and public health, 16(18), 3400. https://doi.org/10.3390/ijerph16183400
       
-*** add sources for methods, particularly where we derived the proportional odds likelilhood/gradient from
+*** add sources for methods, particularly where we derived the proportional odds likelihood/gradient from
 
