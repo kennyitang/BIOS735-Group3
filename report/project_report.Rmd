@@ -29,7 +29,7 @@ The aim of this project is to use Car Accident Data from North Carolina in 2016-
 
 # R-Package
 
-Our R package `group3project` contains the functions needed to fit a proportional odds model and random forest as well as the datasets we used to do so for this report: 
+Our R package `group3project` contains the functions needed to fit a proportional odds model and random forest as well as the datasets we used to do so for this report. You can find this package on [GitHub](https://github.com/kennyitang/BIOS735-Group3/tree/master/group3project).
 
 *Note: edit this as needed as we fill in the R package
 
@@ -64,24 +64,33 @@ The original dataset had 49 total attributes, including attributes related to tr
     + most of the points of interest variables except Crossing and Traffic Signal
 3. The attribute was relevant for spatial purposes (i.e. latitude and longitude), which we do not aim to study at this time.
 
-Therefore this information was not useful for prediction.
+Therefore this information was not useful for prediction. 
 
 In terms of traffic incidents, rows missing all weather variables were removed. After pre-processing, the analysis dataset contains 119,279 traffic accidents from North Carolina between the years 2016 and 2019 with 12 attributes and one outcome variable. Additionally, the analysis data were split up into training data (pre-2019) and testing data (2019) as mentioned previously. The final training dataset has 75,887 observations and the testing has 43,392 observations.
+
+If you’re interested in looking at the code for the Data Processing and Exploratory Analysis, please see **data_prep.R** and **exploratory_analysis.R** in the scripts folder of our [GitHub repository](https://github.com/kennyitang/BIOS735-Group3/tree/master/scripts). 
   
 The variables selected for analysis, and some accompanying exploratory plots are as follows: 
 
 ### Outcome:
 1. Severity:  severity of the accident in terms of the impact on traffic, which is an integer from 1 to 3 with increasing impact. This is an ordinal variable and the outcome of interest.  
 
-Originally this variable had four categories (1-4), but only 24 observations had severity of 1, so we combined severities 1 and 2 and readjusted the scale.  
+Originally this variable had four categories (1-4), but only 24 observations had severity of 1, so we combined severities 1 and 2 and readjusted the scale. Even after this aggregation, our dataset is still very unbalanced. As seen in the code output below, severity class 1 has many more accidents in the training data than the more severe classes.
+
+```{r}
+trn_data$Severity_c = as.factor(trn_data$Severity)
+tst_data$Severity_c = as.factor(tst_data$Severity)
+table(trn_data$Severity_c)
+```
 
 It should be noted that the data set sources are rather vague on the definition of this outcome variable. Length of delay caused by the accident is the major determinant, and we assume that scope, such as how many lane closures there were, may also be taken into account when determining the severity. 
 
 ### Predictors:
 
+1. Source: categorical, API that reported accident (MapQuest, Bing, MapQuest-Bing)  
+
 **Location/Time** 
 
-1. Source: categorical, API that reported accident (MapQuest, Bing, MapQuest-Bing)
 2. Side: categorical, side of street (Left/Right)  
 3. Sunrise_Sunset: categorical (Day/Night)
 4. Weekday: TRUE/FALSE, if accident started on a weekday 
@@ -104,12 +113,12 @@ grid.raster(readPNG("weather_boxplots.png"))
 11. Crossing: TRUE/FALSE, presence of a crossing nearby for pedestrians, cyclists, etc. 
 12. Traffic_Signal: TRUE/FALSE, presence of a traffic signal nearby on an intersection 
 
-```{r fig.width=6,echo=FALSE}
-grid.raster(readPNG("crossing.png"))
-```
-
-```{r fig.width=6,echo=FALSE}
-grid.raster(readPNG("Traffic_Signal.png"))
+```{r,echo=FALSE}
+img1 <-  grid::rasterGrob(as.raster(readPNG("crossing.png")),
+                            interpolate = FALSE)
+img2 <-  grid::rasterGrob(as.raster(readPNG("Traffic_Signal.png")),
+                          interpolate = FALSE)
+gbm::grid.arrange(img1, img2, ncol = 2)
 ```
 
 # Methods 
@@ -288,6 +297,10 @@ varImpPlot(rf_mod_red$finalModel)
 confusionMatrix(predict(rf_mod_red, newdata = tst_data), tst_data$Severity_c)
 ```
 
+```{r fig.width=6,echo=FALSE}
+grid.raster(readPNG("varimp_rf.png"))
+```
+
 #### OF Full Training Data 
 
 ```{r, eval = FALSE}
@@ -406,6 +419,10 @@ varImpPlot(rf_mod_red$finalModel)
 confusionMatrix(predict(rf_mod_red, newdata = tst_data), tst_data$Severity_c)
 ```
 
+```{r fig.width=6,echo=FALSE}
+grid.raster(readPNG("varimp_nosource.png"))
+```
+
 ```{r, echo = FALSE}
 # create table  
 down_df <- data.frame(Reference = c("1", "2", "3"), 
@@ -421,9 +438,9 @@ knitr::kable(down_df, align = 'cccc', caption = "RF Confusion Matrices with and 
 kable_styling(latex_options = c("repeat_header", "scale_down"))
 ```
 
-Second, we subset the processed training and testing data into two groups each: one with `Source = MapQuest` and one with `Source = Bing`. The few observations that were obtained from both APIs were dropped. Additionally, since only 8 observations from MapQuest had severity 3, those observations were dropped and the MapQuest model reduced to a two level outcome model.
+Second, we subset the processed training and testing data into two groups each: one with `Source = MapQuest` and one with `Source = Bing`. The few observations that were obtained from both APIs were dropped. Additionally, since only 8 observations from MapQuest had severity 3, those observations were dropped and the MapQuest model reduced to a two level outcome model. The breakdown of accidents per severity class in both of these training data subsets are output from the code below. We can see in both cases, the outcome remains unbalanced among the classes.
 
-```{r, eval = FALSE}
+```{r}
 bing.trn <- trn_data[c(which(trn_data$Source == "Bing")), ]
 bing.test <- tst_data %>% dplyr::filter(Source == "Bing")
 table(bing.trn$Severity_c)
@@ -436,6 +453,14 @@ table(mq.trn$Severity_c)
 ```
 
 The same code that was used to train Random Forest on the full training data was repeated on the source specific data. 
+
+```{r, echo=FALSE}
+img1 <-  grid::rasterGrob(as.raster(readPNG("varimp_bing.png")),
+                            interpolate = FALSE)
+img2 <-  grid::rasterGrob(as.raster(readPNG("varimp_mq.png")),
+                          interpolate = FALSE)
+gbm::grid.arrange(img1, img2, ncol = 2)
+```
 
 ```{r, echo = FALSE}
 # create table  
@@ -451,19 +476,44 @@ knitr::kable(down_df, align = 'cccc', caption = "Source Specific Confusion Matri
 kable_styling(latex_options = c("repeat_header", "scale_down"))
 ```
 
+
+```{r, echo = FALSE}
+# create table  
+table_df <- data.frame(Method = c("Full Data No Source", "MapQuest Data", "Bing Data"), 
+                       Training_Set_Size = c(75887, 59538, 15518), 
+                       Accuracy = c(0.875, .924, .592), 
+                       Kappa = c(0.510, 0.732, 0.0795), 
+                       Time = c("12 minutes", "8  minutes", "2 minutes"))
+knitr::kable(table_df, align = 'ccccc', caption = "Performance for Source Specific Random Forest Models", booktabs = TRUE) %>%
+kable_styling(latex_options = c("repeat_header", "scale_down"))
+```
+
 # Discussion 
 
-comparison of POM and RF
-  -accuracy
-  -speed
-  -applicability
+Although our accuracy values appear very high at first, we realize that API Source the data came from can greatly affect the results. This "batch effect" is undesirable when building a prediction model that should integrate these sources seamlessly. Aside from this issue, the most important variable in predicting car accident related traffic severity appears to be Interstate. In terms of our models, the Proportional Odds Model, Ordinal Net, Random Forest, and Ordinal Forest seem to perform similarly (in terms of accuracy) on our dataset with an outcome factor with 3 levels although the time to train varied widely. 
+
+It is also clear that summary statistics such as accuracy/Cohen's Kappa do not always tell the whole story. Although they had similar accuracies, the confusion matrices showed us that the likelihood-based models on the full training data had no predictions for severity class 3, whereas the forest-based machine learning models did. This could be because of the Random Forest's ability to account for more complicated interactions between the variables, where our proportional odds model had no interaction terms included. 
+
+We also discovered there is a "batch effect" in that the Source predictor is a very important variable in predicting severity class, although it would ideally have no effect on the outcome. It appears that the MapQuest data alone is more successful in predicting severity of other MapQuest based accidents.
+
+A lot more data or different types of data may be needed to fully answer the questions this project aimed at answering, but this novel large scale and these types of analyses are a step in the right direction
 
 ## Limitations 
 
+As mentioned earlier, our outcome variable severity was defined very vaguely from the two API sources. It is not clear exactly how these classes are derived and whether the "distance" between class 1 and 2 is the same as between class 2 and 3. This limitation contributes to our inability to truly understand the API Source effect on outcome.
+
+There is also lack of information about factors that we believe may be important such as speed limit and type of vehicle(s) involved in the accident. If these were included, we may be able to build a model that captures the full picture. 
+
 ## Future Directions 
 
+We assumed that the proportional odds assumption holds and also assumed there were no longitudinal effects in our data. Testing both of these assumptions would be needed moving forward to ensure our methods are sound. Additionally, adding a penalty feature to our own proportional odds model functions would be a next step, to see how that could potentially improve the likelihood-based models.
+
+It would also be of interest to aggregate our outcome further into two severity classes by combining classes 2 and 3 in order compare models of this type to those we have already built.
+
+In terms of the data, we would like to expand into more states and also incorporate local law enforcement data sets that contain information on the severity of car accidents in terms of injuries, fatalities, etc. One example source of this data is [Town of Cary Crash Data](https://data.world/townofcary/cpd-crash-incidents).
+
 # Data Source 
-The Car Accidents data set for North Carolina and the derived training and test data sets are provided in our project repository. Due to the size, we do not include the original nation-wide car accidents data set in our repository, but interested reader can find the dataset and related information on https://www.kaggle.com/sobhanmoosavi/us-accidents and https://smoosavi.org/datasets/us_accidents.  
+The Car Accidents data set for North Carolina and the derived training and test data sets are provided in our project repository. Due to the size, we do not include the original nation-wide car accidents data set in our repository, but interested reader can find the dataset and related information on [Kaggle](https://www.kaggle.com/sobhanmoosavi/us-accidents) and the author's [Website](https://smoosavi.org/datasets/us_accidents).  
   
   
 # References 
