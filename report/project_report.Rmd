@@ -218,8 +218,16 @@ The gradient is
 
 To fit the proportional odds model, we use the `optimx` function with BFGS as the method, and supply the likelihood and gradient functions given above. In our package, the proportional odds model estimation function takes user-defined formula and datasets and automatically span the model matrix for the subsequent computation of likelihood and gradient. Our function checks whether the input dependent variable is a valid ordered factor variable. It uses `optimx`'s second derivative optimality condition check to recommend users to scale continuous variables in order to obtain stable standard error estimates. In contrast to existing proportional odds model functions such as `MASS:polr()`, our function used arbitrary instead of `glm.fit` output as model starting values. While this increased computation time, we believe it may better avoid fitting at local optimum and increase robustness in the estimation.
 
-We also explored fitting a penalized proportional odds model to our data with an elastic net penalty by coordinate descent with the `ordinalNet` package.
-### Variable Selection
+### Variable Selection for the proportional odds model
+
+We used the `stepAIC` function in the `MASS` package to perform variable selection for the proportional odds model. We set the direction to be `both` in the `stepAIC` function, which means that we compared the AIC improvements from both dropping and adding each candidate covariate until we reach to the model with the smallest AIC. 
+The full model we started with is the model with 12 predictors that we manually selected , with no interactions. We ended up with all of the 12 predictors kept in the model, which will be used to present our results of the proportional odds model. 
+
+### Penalized proportional odds model
+
+We also explored fitting a penalized proportional odds model to our data with an elastic penalty by coordinate descent with the `ordinalNet` package. The likelihood and the linear predictor take the same forms as in the proportional odds model. The penalty term is given as $$\lambda\sum_{j=1}^Pc_j\{\alpha|b_j|+\frac{1}{2}(1-\alpha)b_j^2\},$$
+
+where in our case we chose $c_j=1$ for all $j$ and $\alpha=1$, so this is equivalent to the Lasso penalty. The objective function that we would like to minimize is given as $$-\frac{1}{N} l(\alpha,\beta)+\lambda\sum_{j=1}^p|b_j|.$$
 
   
 ## Random Forest
@@ -281,13 +289,60 @@ Specifically, our coefficient estimates suggest that, *given* that an accident h
 The parametric proportional odds model approach allows us to identify influential predictors, as well as the direction and magnitude of their effect. However, We noticed that our intercept estimates were about 3.34 and 6.46, suggesting an extreme shift in the nonlinear CDF that left little probabilities of predicting a highest level of car accident severity. This signals a limitation of the parametric proportional odds model in comparison to the random forest approach.
 
 
+
+### Comparison with the penalized proportional odds model
+
+```{r}
+library(ordinalNet)
+library(fastDummies)
+
+predictors <- c("Source", "Side", "Temperature(F)", "Humidity(%)", "Pressure(in)", "Visibility(mi)", "Wind_Speed(mph)", "Crossing", "Traffic_Signal", "Sunrise_Sunset", "weekday", "interstate")
+x <- trn_data[, predictors, with = F]
+y <- trn_data[, "Severity_c"]
+
+tokeep <- which(sapply(x, is.numeric))
+x_categorical <- x[ , -tokeep, with=FALSE]
+x_dummy <- dummy_cols(x, select_columns = colnames(x_categorical))
+
+newx <- (x_dummy[, -colnames(x_categorical), with = F])
+newy <- as.factor(trn_data$Severity_c)
+
+time.start <- Sys.time()
+fit1 <- ordinalNet(as.matrix(x_dummy[, -colnames(x_categorical), with = F]), newy, 
+                   family="cumulative", link="logit",
+                   parallelTerms=TRUE, nonparallelTerms=FALSE)
+time.stop <- Sys.time()
+time.stop - time.start
+
+x_test <- tst_data[, predictors, with = F]
+tokeep <- which(sapply(x_test, is.numeric))
+x_test_categorical <- x_test[ , -tokeep, with=FALSE]
+x_test_dummy <- dummy_cols(x_test, select_columns = colnames(x_test_categorical))
+
+newx_test <- (x_test_dummy[, -colnames(x_test_categorical), with = F])
+
+predicted <- predict(fit1, newx = as.matrix(newx_test), type="class")
+
+calc_acc(actual = tst_data$Severity_c, predicted = predicted)
+confusionMatrix(as.factor(predicted), tst_data$Severity_c)
+```
+
+Below is a plot comparing the coefficient estimates from the proportional odds model and the penalized model. We can see that the parameter estimates from ordinalNet have smaller magnitude in most cases, which is what we expected, but overall still largely consistent. The coefficients of variables `Source_MapQuest-Bing`, `Temperature`, and `Wind speed` were shunk to zero. Notice that `Source_MapQuest-Bing` has a coefficient estimate around 0.3 in the proportional odds model, and the other two variables have very small effect sizes. Weatjer condition variables have small effect sizes in both model.
+
+```{r fig.width=8,echo=FALSE}
+grid.raster(readPNG("ordinal.png"))
+```
+
+
+Below is a table of the confusion matrices of the proportional odds model and the penalized model. We can see that both methods did not predict an accident as severity level 3, which is due to the unbalanced number of severity levels in our training dataset. These two models produced similar overall prediction accuracy.   
+
 ```{r, echo = FALSE}
 #####We have this table of ordinal net estimates but not any description above yet.
 # create table  
 down_df <- data.frame(Reference = c("1", "2", "3"), 
-                       Predict1 = c(33959, 813, 543), 
-                       Predict2 = c(2753, 5207, 114), 
-                       Predict3 = c(0,0,0), 
+                       Predict.1 = c(33959, 813, 543), 
+                       Predict.2 = c(2753, 5207, 114), 
+                       Predict.3 = c(0,0,0), 
                        Predict.1 = c(33906, 753, 540), 
                        Predict.2 = c(2806, 5267, 117), 
                        Predict.3 = c(0, 0, 0))
@@ -296,6 +351,7 @@ knitr::kable(down_df, align = 'cccc', caption = "Proportional Odds and Ordinal N
   add_header_above(c("", "Proportional Odds" = 3, "Ordinal Net" = 3)) %>%
 kable_styling(latex_options = c("repeat_header", "scale_down"))
 ```
+
 
 
 ## Random Forest
