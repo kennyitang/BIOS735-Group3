@@ -527,13 +527,13 @@ A lot more data or different types of data may be needed to fully answer the que
 
 ## Limitations 
 
-As mentioned earlier, our outcome variable severity was defined very vaguely from the two API sources. It is not clear exactly how these classes are derived and whether the "distance" between class 1 and 2 is the same as between class 2 and 3. This limitation contributes to our inability to truly understand the API Source effect on outcome.
+As mentioned earlier, our outcome variable severity was defined very vaguely from the two API sources. It is not clear exactly how these classes are derived and whether the "distance" between class 1 and 2 is the same as between class 2 and 3, and across the two sources. This limitation contributes to our inability to truly understand the API Source effect on outcome.
 
 There is also lack of information about factors that we believe may be important such as speed limit and type of vehicle(s) involved in the accident. If these were included, we may be able to build a model that captures the full picture. 
 
 ## Future Directions 
 
-We assumed that the proportional odds assumption holds and also assumed there were no longitudinal effects in our data. Testing both of these assumptions would be needed moving forward to ensure our methods are sound. Additionally, adding a penalty feature to our own proportional odds model functions would be a next step, to see how that could potentially improve the likelihood-based models.
+We assumed that the proportional odds assumption holds and also assumed there were no longitudinal effects in our data. Testing both of these assumptions would be needed moving forward to ensure our methods are sound. Additionally, adding a penalty feature to our own proportional odds model functions would be a next step, to see how that could potentially improve the likelihood-based models, and potentially allows for evaluating interactions or more variables from other data sets.
 
 It would also be of interest to aggregate our outcome further into two severity classes by combining classes 2 and 3 in order compare models of this type to those we have already built.
 

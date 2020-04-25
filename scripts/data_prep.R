@@ -20,8 +20,12 @@ library(dplyr)
 #' date: "`r format(Sys.time(), '%m/%d/%Y')`"
 #' ---
 
+# Subset the raw data to focus only on accidents in NC
+raw = fread('US_Accidents_Dec19.csv')
+NC = raw[State=='NC',]
+fwrite(NC, 'NC_Accidents.csv') 
 
-
+# Read NC accidents data
 data = fread("./Data/NC_Accidents.csv")
 str(data)
 
