@@ -17,6 +17,8 @@ library(png)
 library(grid)
 library(kableExtra)
 library(ggplot2)
+library(ordinalNet)
+library(fastDummies)
 ```
 
 # Introduction 
@@ -57,6 +59,10 @@ Our R package `group3project` contains the functions needed to fit a proportiona
 devtools::load_all("../group3project")
 data("trn_data")
 data("tst_data")
+
+# run the following code to see documentation 
+# devtools::install("../group3project")
+# library(group3project)
 ```
 
 # Data
@@ -282,7 +288,7 @@ plot(g)
 
 ```
 
-The coefficient estimates can be interpreted as the magnitude and direction of the predictor's influence on the probabilities of observing an accident with a certain level of severity, *conditional on* when accidents happened. It is worth pointing out that, the direction of the effect of a predictor $\hat{\beta_j}$ is unambiguously determined by the sign of the coefficient only for $P(y=1 | \mathbf{x}_i)$ and $P(y=3 | \mathbf{x}_i)$, the probabilities of the smallest and the highest response category (Woodridge, 2002, p. 656). The effect of a predictor on $P(y=2 | \mathbf{x}_i)$ can go either direction.
+The coefficient estimates can be interpreted as the magnitude and direction of the predictor's influence on the probabilities of observing an accident with a certain level of severity, *conditional on* when accidents happened. It is worth pointing out that, the direction of the effect of a predictor $\hat{\beta_j}$ is unambiguously determined by the sign of the coefficient only for $P(y=1 | \mathbf{x}_i)$ and $P(y=3 | \mathbf{x}_i)$, the probabilities of the smallest and the highest response category<sup>[7]</sup>. The effect of a predictor on $P(y=2 | \mathbf{x}_i)$ can go either direction.
 
 Specifically, our coefficient estimates suggest that, *given* that an accident happened, being on an interstate significantly increases the probability that this accident has a level-3 severity (on average from about 0.1% probability to roughly 10%), rather than a level-1 severity (from about 90% to a third of that). Having a traffic signal or pedestrian crossing nearby significantly decreases the probability that the accident has a level-3 severity (from about 0.1% to about half of that) while increasing the probability that the accident has a level-1 severity (by 5-10% on average).
 
@@ -292,10 +298,7 @@ The parametric proportional odds model approach allows us to identify influentia
 
 ### Comparison with the penalized proportional odds model
 
-```{r}
-library(ordinalNet)
-library(fastDummies)
-
+```{r, eval = FALSE}
 predictors <- c("Source", "Side", "Temperature(F)", "Humidity(%)", "Pressure(in)", "Visibility(mi)", "Wind_Speed(mph)", "Crossing", "Traffic_Signal", "Sunrise_Sunset", "weekday", "interstate")
 x <- trn_data[, predictors, with = F]
 y <- trn_data[, "Severity_c"]
@@ -327,7 +330,7 @@ calc_acc(actual = tst_data$Severity_c, predicted = predicted)
 confusionMatrix(as.factor(predicted), tst_data$Severity_c)
 ```
 
-Below is a plot comparing the coefficient estimates from the proportional odds model and the penalized model. We can see that the parameter estimates from ordinalNet have smaller magnitude in most cases, which is what we expected, but overall still largely consistent. The coefficients of variables `Source_MapQuest-Bing`, `Temperature`, and `Wind speed` were shunk to zero. Notice that `Source_MapQuest-Bing` has a coefficient estimate around 0.3 in the proportional odds model, and the other two variables have very small effect sizes. Weatjer condition variables have small effect sizes in both model.
+Below is a plot comparing the coefficient estimates from the proportional odds model and the penalized model. We can see that the parameter estimates from ordinalNet have smaller magnitude in most cases, which is what we expected, but overall still largely consistent. The coefficients of variables `Source_MapQuest-Bing`, `Temperature`, and `Wind speed` were shunk to zero. Notice that `Source_MapQuest-Bing` has a coefficient estimate around 0.3 in the proportional odds model, and the other two variables have very small effect sizes. Weather condition variables have small effect sizes in both model.
 
 ```{r fig.width=8,echo=FALSE}
 grid.raster(readPNG("ordinal.png"))
@@ -337,7 +340,6 @@ grid.raster(readPNG("ordinal.png"))
 Below is a table of the confusion matrices of the proportional odds model and the penalized model. We can see that both methods did not predict an accident as severity level 3, which is due to the unbalanced number of severity levels in our training dataset. These two models produced similar overall prediction accuracy.   
 
 ```{r, echo = FALSE}
-#####We have this table of ordinal net estimates but not any description above yet.
 # create table  
 down_df <- data.frame(Reference = c("1", "2", "3"), 
                        Predict.1 = c(33959, 813, 543), 
@@ -351,8 +353,6 @@ knitr::kable(down_df, align = 'cccc', caption = "Proportional Odds and Ordinal N
   add_header_above(c("", "Proportional Odds" = 3, "Ordinal Net" = 3)) %>%
 kable_styling(latex_options = c("repeat_header", "scale_down"))
 ```
-
-
 
 ## Random Forest
 
