@@ -299,6 +299,9 @@ The parametric proportional odds model approach allows us to identify influentia
 ### Comparison with the penalized proportional odds model
 
 ```{r, eval = FALSE}
+trn_data <- trn_data %>% as.data.table()
+trn_data <- tst_data %>% as.data.table()
+
 predictors <- c("Source", "Side", "Temperature(F)", "Humidity(%)", "Pressure(in)", "Visibility(mi)", "Wind_Speed(mph)", "Crossing", "Traffic_Signal", "Sunrise_Sunset", "weekday", "interstate")
 x <- trn_data[, predictors, with = F]
 y <- trn_data[, "Severity_c"]
