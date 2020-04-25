@@ -22,11 +22,11 @@ library(kableExtra)
 
 Sitting in traffic is not ideal for anyone, and it is especially frustrating when the traffic is caused by an accident. It is an unexpected delay, and many times it is completely uncertain how long the delay will last.  For a country where the majority of the population relies so heavily on automobiles for daily transportation, traffic delays may result in a multitude of disruptions in many other aspects of life as well.  
 
-Not only is sitting traffic frustrating, but the resulting air pollution and long-term exposure to vehicle emissions may also be associated with future health and respiratory issues.<sup>[5]</sup>  Moreover, traffic accidents pose a big problem for public safety. In many studies, traffic congestion has been considered a potentially important factor impacting the occurrence of accidents,<sup>[6]</sup> suggesting that the severity of a traffic delay caused by one accident may influence the likelihood of a secondary accident.
+Not only is sitting traffic frustrating, but the resulting air pollution and long-term exposure to vehicle emissions may also be associated with future health and respiratory issues.<sup>[1]</sup>  Moreover, traffic accidents pose a big problem for public safety. In many studies, traffic congestion has been considered a potentially important factor impacting the occurrence of accidents,<sup>[2]</sup> suggesting that the severity of a traffic delay caused by one accident may influence the likelihood of a secondary accident.
 
 Traffic accident data can therefore be an invaluable resource, as it can provide information that can potentially aid in predicting conditions where traffic accidents are prone to happen, so that steps can be taken to prevent the accident. Further, this data could also be useful in predicting how severely an accident will delay the drivers following the accident, so that steps can be taken to reduce this delay as needed. 
 
-Several computer scientists from the Ohio State University present exactly this: a dataset of traffic accidents from the contiguous United States, covering 2.95 million accidents with data collected between February 2016 and December 2019. As of March 2019, of the 49 states included, North Carolina had the fourth highest number of accidents in the dataset at 109,000. <sup>[1]</sup> Because of the wide range of attributes collected with each accident in the dataset, this dataset has the potential to provide the information needed to start making decisions about how to mitigate traffic accidents and the delays associated.
+Several computer scientists from the Ohio State University present exactly this: a dataset of traffic accidents from the contiguous United States, covering 2.95 million accidents with data collected between February 2016 and December 2019. As of March 2019, of the 49 states included, North Carolina had the fourth highest number of accidents in the dataset at 109,000. <sup>[3]</sup> Because of the wide range of attributes collected with each accident in the dataset, this dataset has the potential to provide the information needed to start making decisions about how to mitigate traffic accidents and the delays associated.
 
 # Project Aim 
 
@@ -39,18 +39,19 @@ Our R package `group3project` contains the functions needed to fit a proportiona
 *Note: edit this as needed as we fill in the R package
 
 * Functions for Proportional Odds Model
-    + loglik.pom: computes log likelihood of a proportional odds model
-    + gradient.pom:      <--which one to use?
-    + gradient.pom2:
-    
+    + pom.est: return the estimates of intercepts and slopes of a proportional odds model. It calls the following functions:
+    + loglik.pom: computes log likelihood of a proportional odds model, 
+    + gradient.pom: computes the gradient of the log likelihood of a proportional odds model,
+    + pom.logistic: evaluates a standard logistic function/anti-logit function, and
+    + pom.recode: which prepares the design matrix for the proportional odds model.
 
 * Functions for Random Forest
-    + calc_acc: calculates accuracy of classification
+    + calc_acc: calculates the accuracy of classification.
 
 * Datasets 
-    + Testing Data (tst_data)
-    + Training Data (trn_data)
-    + Full NC Data (nc_data)
+    + Testing Data (tst_data)  
+    + Training Data (trn_data) 
+    + Full NC Data (nc_data)  
 
 ```{r, message = FALSE}
 ## load our package and datasets here
@@ -67,10 +68,9 @@ The original dataset had 49 total attributes, including attributes related to tr
 2. The attribute had very low or no variability across the observations.  
     + after aggregating the County variable into urban and rural factor levels, it was apparent that about 95% of the accident data was derived from urban areas, therefore variables such as County, Zip-Code, and City were not of use 
     + most of the points of interest variables except Crossing and Traffic Signal
-3. The attribute was relevant for spatial purposes (i.e. latitude and longitude), which we do not aim to study at this time.
-
-Therefore this information was not useful for prediction. 
-
+3. The attribute was relevant for spatial purposes (i.e. latitude and longitude), which we do not aim to study at this time.  
+  
+  
 In terms of traffic incidents, rows missing all weather variables were removed. After pre-processing, the analysis dataset contains 119,279 traffic accidents from North Carolina between the years 2016 and 2019 with 12 attributes and one outcome variable. Additionally, the analysis data were split up into training data (pre-2019) and testing data (2019) as mentioned previously. The final training dataset has 75,887 observations and the testing has 43,392 observations.
 
 If you’re interested in looking at the code for the Data Processing and Exploratory Analysis, please see **data_prep.R** and **exploratory_analysis.R** in the scripts folder of our [GitHub repository](https://github.com/kennyitang/BIOS735-Group3/tree/master/scripts). 
@@ -127,7 +127,7 @@ gbm::grid.arrange(img1, img2, ncol = 2)
 ```
 
 # Methods 
-We apply a proportional odds model with severity of an accident as the outcome, and predictors listed in the previous section as covariates. Based on paramter estimates of this model <---potentially with penalization--->, we identify variables that are most associated with severity. In parallel, starting with the same set of variables, we use random forest to find the predictors and build a model that yields the best classification.  
+We apply a proportional odds model with severity of an accident as the outcome, and predictors listed in the previous section as covariates. Based on paramter estimates of this model, we identify variables that are most associated with severity. In parallel, starting with the same set of variables, we use random forest to find the predictors and build a model that yields the best classification.  
 
 
 ## Proportional Odds Model  
@@ -214,10 +214,7 @@ The gradient is
   }
 \]   
 
-### Proportional Odds Model with Penalty  
-Although we only listed 13 predictors of interest, the Weather_Condition variable contains 53 levels alone, which can be problematic to fit especially if interactions are of interest. Meanwhile, aggregating the levels can be very subjective. To solve this problem, we integrate a <---insert the kind of penalty---> penalty term into the ordinary proportional odds model.
-
-<---formulas for penalty and the likelihood function and gradient---->
+To fit the proportional odds model, we use the `optimx` function with BFGS as the method, and supply the likelihood and gradient functions given above. We also explored fitting a penalized proportional odds model to our data with an elastic net penalty by coordinate descent with the `ordinalNet` package.
 
 
 ### Variable Selection
@@ -234,19 +231,19 @@ Since the levels of severity are not balanced, we also down-sampled the less sev
 
 ## Evaluation and Comparison of Models
 
-In order to compare the performance of the different models built, we will use the attributes from the observations in our test set to predict their severity classification for each model. Then we can quantitatively compare which observations were correctly classified.
+In order to compare the performance of the different models built, we use the attributes from the observations in our test set to predict their severity classification for each model. Then we quantitatively compare which observations were correctly classified.
 
 One way to do this is to measure the **accuracy** of the models on the test set. To do this, the fraction of the correctly classified observations is divided by the total number of observations in the test set. 
 
 Another method to evaluate categorical models is to use **Cohen's Kappa**, which scales the accuracy to account for the predictions that are correct by guessing. We predict this will be more useful to us than the accuracy metric, since most of our data points come from Severity level 1 and accuracy could be very high simply by guessing all observations are in this class.
 
-We can also compare the computational time it takes to build each model, called the **time to train**. This is important when working with large datasets. 
+We also compare the computational time it takes to build each model, called the **time to train**. This is important when working with large datasets. 
 
-And finally, for a more visual comparison, we can look at the **Confusion Matrix** for the test set. This will be a 3 x 3 matrix in our case which tells us how many observations were predicted as class 1, 2, or 3 when their true classification is 1, 2, or 3.
+And finally, for a more visual comparison, we can look at the **Confusion Matrix** for the test set. This will be a 3 x 3 matrix in our case, which tells us how many observations are predicted as class 1, 2, or 3 when their true classification is 1, 2, or 3.
 
 # Results 
 
-Note that not all of the code is run in this markdown document due to compiling time. If you’re interested in running the code for the forest-based methods, please see **random_forest.R** in the scripts folder of our [GitHub repository](https://github.com/kennyitang/BIOS735-Group3/tree/master/scripts). 
+Note that not all of the code is run in this markdown document due to compiling time. If you’re interested in running the code for the random forest-based methods, please see **random_forest.R** in the scripts folder of our [GitHub repository](https://github.com/kennyitang/BIOS735-Group3/tree/master/scripts). 
 
 ## Proportional Odds Model
 ```{r}
@@ -522,21 +519,25 @@ The Car Accidents data set for North Carolina and the derived training and test 
   
   
 # References 
-[1] Moosavi, Sobhan, Mohammad Hossein Samavatian, Srinivasan Parthasarathy, and Rajiv
+[1] Levy, J.I., Buonocore, J.J. & von Stackelberg, K. Evaluation of the public health impacts of traffic congestion: a health risk assessment. Environ Health 9, 65 (2010). https://doi.org/10.1186/1476-069X-9-65
+
+[2] Retallack, A. E., & Ostendorf, B. (2019). Current Understanding of the Effects of Congestion on Traffic Accidents. International journal of environmental research and public health, 16(18), 3400. https://doi.org/10.3390/ijerph16183400
+
+[3] Moosavi, Sobhan, Mohammad Hossein Samavatian, Srinivasan Parthasarathy, and Rajiv
       Ramnath. “A Countrywide Traffic Accident Dataset.”, 2019.
   
-[2] Moosavi, Sobhan, Mohammad Hossein Samavatian, Srinivasan Parthasarathy, Radu
+[4] Moosavi, Sobhan, Mohammad Hossein Samavatian, Srinivasan Parthasarathy, Radu
       Teodorescu, and Rajiv Ramnath. "Accident Risk Prediction based on Heterogeneous
       Sparse Data: New Dataset and Insights." In proceedings of the 27th ACM SIGSPATIAL
       International Conference on Advances in Geographic Information Systems, ACM, 2019.
       
-[3] Bing documentation on traffic incident data: https://docs.microsoft.com/en-us/bingmaps/rest-services/traffic/traffic-incident-data
+[5] Bing documentation on traffic incident data: https://docs.microsoft.com/en-us/bingmaps/rest-services/traffic/traffic-incident-data
    
-[4] MapQuest documentation on traffic incident data: https://developer.mapquest.com/documentation/traffic-api/incidents/get/#response_field-severity
+[6] MapQuest documentation on traffic incident data: https://developer.mapquest.com/documentation/traffic-api/incidents/get/#response_field-severity
 
-[5] Levy, J.I., Buonocore, J.J. & von Stackelberg, K. Evaluation of the public health impacts of traffic congestion: a health risk assessment. Environ Health 9, 65 (2010). https://doi.org/10.1186/1476-069X-9-65
 
-[6] Retallack, A. E., & Ostendorf, B. (2019). Current Understanding of the Effects of Congestion on Traffic Accidents. International journal of environmental research and public health, 16(18), 3400. https://doi.org/10.3390/ijerph16183400
+
+
       
 *** add sources for methods, particularly where we derived the proportional odds likelihood/gradient from
 

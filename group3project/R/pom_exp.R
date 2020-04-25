@@ -1,4 +1,4 @@
-#' POM parameter estimation 
+#' Proportional odds model parameter estimation 
 #' 
 #' This function returns the intercept and coefficient estimates of the ordered logit model, allowing
 #' an optional standard error output.
