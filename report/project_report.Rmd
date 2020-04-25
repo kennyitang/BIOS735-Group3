@@ -37,14 +37,12 @@ The aim of this project is to use Car Accident Data from North Carolina in 2016-
 
 Our R package `group3project` contains the functions needed to fit a proportional odds model and random forest as well as the datasets we used to do so for this report. You can find this package on [GitHub](https://github.com/kennyitang/BIOS735-Group3/tree/master/group3project). We provide more details on these functions in the later sections.
 
-*Note: edit this as needed as we fill in the R package
-
 * Functions for Proportional Odds Model
     + pom.est: return the estimates and optionally the standard errors of the intercept and slope estimates of a proportional odds model. It calls the following functions:
-    + loglik.pom: computes log likelihood of a proportional odds model, 
-    + gradient.pom: computes the gradient of the log likelihood of a proportional odds model,
-    + pom.logistic: evaluates a standard logistic function/anti-logit function, and
-    + pom.recode: which prepares the design matrix for the proportional odds model.
+        - loglik.pom: computes log likelihood of a proportional odds model, 
+        - gradient.pom: computes the gradient of the log likelihood of a proportional odds model,
+        - pom.logistic: evaluates a standard logistic function/anti-logit function, and
+        - pom.recode: which prepares the design matrix for the proportional odds model.
 
 * Functions for Random Forest
     + calc_acc: calculates the accuracy of classification.
@@ -93,7 +91,10 @@ It should be noted that the data set sources are rather vague on the definition 
 
 ### Predictors:
 
-1. Source: categorical, API that reported accident (MapQuest, Bing, MapQuest-Bing)  
+1. Source: categorical, API that reported accident (MapQuest <sup>[6]</sup>, Bing <sup>[5]</sup>, MapQuest-Bing)  
+    + We would expect an intersection between the data from different sources
+    + Both APIs have severity scales 1-4, but we don't know that they are harmonious
+    + Including Source Predictor in our models to determine whether or not it is important in predicting our outcome 
 
 **Location/Time** 
 
@@ -132,7 +133,7 @@ We apply a proportional odds model with severity of an accident as the outcome, 
 
 
 ## Proportional Odds Model  
-For a single severity outcome $Y_i \in \{1,2,3\}$ with covariates $x_i \in \mathbb{R}^p $, the usual proportional odds model suggests that 
+For a single severity outcome $Y_i \in \{1,2,3\}$ with covariates $x_i \in \mathbb{R}^p$, the usual proportional odds model suggests that 
 \[
   {\displaystyle
     \begin{aligned}
@@ -154,7 +155,7 @@ P(Y_i\leq k) = \frac{1}{1 + exp(x_i^T\beta-\alpha_k)} = \phi(\alpha_k-x_i^T\beta
   }  
 \]
 
-If we define $\alpha = (\alpha_1,\alpha_2)^T$, then log likelihood function for n accidents is therefore given by 
+If we define $\alpha = (\alpha_1,\alpha_2)^T$, then log likelihood function for n accidents is therefore given by <sup>[7]</sup> 
 \[
   {\displaystyle
     \begin{aligned}
@@ -163,7 +164,7 @@ l(\alpha, \beta)&= \sum_{i=1}^n\sum_{k=1}^3I(Y_i=k)log(P(Y_i=k))\\
                 &=\sum_{i=1}^n\{I(Y_i=1)log(\phi(\alpha1-x_i^T\beta))+ I(Y_i=2)log(\phi(\alpha2-x_i^T\beta)-\phi(\alpha1-x_i^T\beta))+  I(Y_i=3)log(1-\phi(\alpha2-x_i^T\beta))\}
     \end{aligned}
   }
-\] (Woodridge,2002, p.656).  
+\]
 
 The gradient is 
 \[
@@ -295,6 +296,8 @@ kable_styling(latex_options = c("repeat_header", "scale_down"))
 
 #### RF Full Training Data
 
+The code run to build the Random Forest on the training data with all predictors and test its predictive performance on the test set is given below.
+
 ```{r, eval = FALSE}
 #5-fold cross-validation
 cv_5 = trainControl(method = "cv", number = 5)
@@ -324,11 +327,15 @@ varImpPlot(rf_mod_red$finalModel)
 confusionMatrix(predict(rf_mod_red, newdata = tst_data), tst_data$Severity_c)
 ```
 
+Below is a plot of variable importance for the random forest model. It is clear that the interstate predictor is the most important in predicting severity. The second most important is the sourceMapQuest variable, which is undesirable. We hoped that there would be no discrepancy between the severity scales of the different API Sources, but instead it appears that the Source is important in predicting severity, which is not a practical predictor to include in a model. Later, we will explore some Source-Specific models as potential remedies to overcome this so-called "batch-effect".
+
 ```{r fig.width=6,echo=FALSE}
 grid.raster(readPNG("varimp_rf.png"))
 ```
 
 #### OF Full Training Data 
+
+The code run to build the Ordinal Forest on the training data with all predictors and test its predictive performance on the test set is given below.
 
 ```{r, eval = FALSE}
 #Prepare data
@@ -353,6 +360,8 @@ preds <- predict(ordforest, newdata = datatest)
 #Obtain confusion matrix, accuracy, and kappa 
 confusionMatrix(preds$ypred, datatest$Severity_c)
 ```
+
+Below are the confusion matrices for the Random Forest and Ordinal Forest predictions on the test set defined as the 2019 car accidents in North Carolina. While the matrices are similar, we see that the Ordinal Forest method correctly classifies more severity class 2 and 3 observations than Random Forest as seen along the diagonals of the matrices. Additionally and consequently, Ordinal Forest misclassifies less class 2 and 3 observations as class 1, as seen in the first column of each matrix.
 
 ```{r, echo = FALSE}
 # create table  
@@ -380,7 +389,7 @@ downsample.trn <- trn_data[c(which(trn_data$Severity_c == 3),
                              sample(which(trn_data$Severity_c == 2), 1081)),]
 ```
 
-The same code that was used to train Random Forest and Ordinal Forest on the full training data was repeated on the Downsampled data. 
+The same code that was used to train Random Forest and Ordinal Forest on the full training data was repeated on the Downsampled data. Below are the confusion matrices for the Random Forest and Ordinal Forest predictions on the test set when the models were built from the down sampled training set. We don't see a big difference between the two methods, but compared to the full training set, we see more predictions for severity class 3, both correct and incorrect classifications.
 
 ```{r, echo = FALSE}
 # create table  
@@ -413,7 +422,7 @@ kable_styling(latex_options = c("repeat_header", "scale_down"))
 ```
 
 ## Source Specific Modeling 
-Due to the results from the full dataset, it is clear that the `Source` Predictor is important in predicting the severity of car accidents on traffic delays in our dataset. It is not practical to use a prediction model with a variable such as API data source as an important predictor in the model. The different sources should ideally fit seamlessly together, but instead we have heterogeneity among the MapQuest and Bing derived data. Given more time, it might be of interest to reach out to these API sources to gather more information about their respective definitions of severity so we could try to create a more harmonious output. In the meantime, we build three new Random Forest models to investigate this issue further. 
+Due to the results from the full dataset, it is clear that the Source Predictor is important in predicting the severity of car accidents on traffic delays in our dataset. It is not practical to use a prediction model with a variable such as API data source as an important predictor in the model. The different sources should ideally fit seamlessly together, but instead we have heterogeneity among the MapQuest and Bing derived data. Given more time, it might be of interest to reach out to these API sources to gather more information about their respective definitions of severity so we could try to create a more harmonious output. In the meantime, we build three new Random Forest models to investigate this issue further. 
 
 First, we build a model on the full training dataset, but removing Source from the set of predictors. 
 
@@ -446,9 +455,14 @@ varImpPlot(rf_mod_red$finalModel)
 confusionMatrix(predict(rf_mod_red, newdata = tst_data), tst_data$Severity_c)
 ```
 
+Below is a plot of variable importance for the random forest model. It is clear that the 
+interstate predictor is still the most important in predicting severity, as was the case when the Source predictor was included in the model. 
+
 ```{r fig.width=6,echo=FALSE}
 grid.raster(readPNG("varimp_nosource.png"))
 ```
+
+Below are the confusion matrices for the Random Forest predictions on the test set with and without the Source predictor. The 'with' confusion matrix is the same one seen above, placed here again for comparison. We see that no class 3 observations are classified correctly, which is an unfortunate consequence of removing this important predictor.
 
 ```{r, echo = FALSE}
 # create table  
@@ -479,7 +493,8 @@ mq.trn$Severity_c <- droplevels(mq.trn$Severity_c)
 table(mq.trn$Severity_c)
 ```
 
-The same code that was used to train Random Forest on the full training data was repeated on the source specific data. 
+The same code that was used to train Random Forest on the full training data was repeated on the source specific data. Below are the plots of variable importance for the random forest models (Bing on the left and MapQuest on the right). It is clear that the 
+interstate predictor is still the most important in predicting severity for the MapQuest specific model only. For the Bing model, Source is of middle importance compared to the rest of the predictors, and Temperature is the most important. 
 
 ```{r, echo=FALSE}
 img1 <-  grid::rasterGrob(as.raster(readPNG("varimp_bing.png")),
@@ -488,6 +503,8 @@ img2 <-  grid::rasterGrob(as.raster(readPNG("varimp_mq.png")),
                           interpolate = FALSE)
 gbm::grid.arrange(img1, img2, ncol = 2)
 ```
+
+Below are the confusion matrices for the Bing and MapQuest model predictions on the Bing and MapQuest specific test sets. While the MapQuest model appears to correctly predict most observations, the Bing model predicts a very small percentage of class 2 and 3 correctly, placing most of its predictions in class 1.
 
 ```{r, echo = FALSE}
 # create table  
@@ -503,6 +520,7 @@ knitr::kable(down_df, align = 'cccc', caption = "Source Specific Confusion Matri
 kable_styling(latex_options = c("repeat_header", "scale_down"))
 ```
 
+The table below compares the 3 models built exploring the Source Predictor. We can see that removing the Source predictor for the full training data does not negatively impact the accuracy and Kappa values too much. For the MapQuest specific model, the accuracy and Kappa values are the highest seen of any of the models thus far. For the Bing specific model, it's exactly the opposite, the lowest seen so far.  
 
 ```{r, echo = FALSE}
 # create table  
@@ -529,13 +547,15 @@ A lot more data or different types of data may be needed to fully answer the que
 
 As mentioned earlier, our outcome variable severity was defined very vaguely from the two API sources. It is not clear exactly how these classes are derived and whether the "distance" between class 1 and 2 is the same as between class 2 and 3, and across the two sources. This limitation contributes to our inability to truly understand the API Source effect on outcome.
 
+Another limitation is the imbalance of data we have in the training set, with most of the observations in severity class 1. Although we tried down-sampling, this resulted in an immense loss of information, using about 3,000 of our 75,000 training accidents. 
+
 There is also lack of information about factors that we believe may be important such as speed limit and type of vehicle(s) involved in the accident. If these were included, we may be able to build a model that captures the full picture. 
 
 ## Future Directions 
 
 We assumed that the proportional odds assumption holds and also assumed there were no longitudinal effects in our data. Testing both of these assumptions would be needed moving forward to ensure our methods are sound. Additionally, adding a penalty feature to our own proportional odds model functions would be a next step, to see how that could potentially improve the likelihood-based models, and potentially allows for evaluating interactions or more variables from other data sets.
 
-It would also be of interest to aggregate our outcome further into two severity classes by combining classes 2 and 3 in order compare models of this type to those we have already built.
+It would also be of interest to aggregate our outcome further into two severity classes by combining classes 2 and 3 in order compare models of this type to those we have already built. It would also be useful to try and account for the imbalanced data in other ways, potentially by using a weighted Random Forest, or even by borrowing data from other states in the minority classes.
 
 In terms of the data, we would like to expand into more states and also incorporate local law enforcement data sets that contain information on the severity of car accidents in terms of injuries, fatalities, etc. One example source of this data is [Town of Cary Crash Data](https://data.world/townofcary/cpd-crash-incidents).
 
@@ -560,9 +580,5 @@ The Car Accidents data set for North Carolina and the derived training and test 
    
 [6] MapQuest documentation on traffic incident data: https://developer.mapquest.com/documentation/traffic-api/incidents/get/#response_field-severity
 
-
-
-
-      
-*** add sources for methods, particularly where we derived the proportional odds likelihood/gradient from
+[7] (Woodridge,2002, p.656). 
 
