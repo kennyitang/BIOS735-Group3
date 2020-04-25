@@ -2856,7 +2856,7 @@ data(&quot;tst_data&quot;)</code></pre>
 <ol style="list-style-type: decimal">
 <li>The attribute had at least 60% missingness.
 <ul>
-<li>Wind Chill (which is also a function of Temperature and Wind speed) and Precipitation (which also has low variability)</li>
+<li>Wind Chill (which is also redundant since it is a function of Temperature and Wind speed) and Precipitation (which also has low variability)</li>
 </ul></li>
 <li>The attribute had very low or no variability across the observations.
 <ul>
@@ -3040,7 +3040,7 @@ estimates = pom.est(Severity_c ~ Source + Side + temperature_sc + humdity_sc + p
 <pre><code>## Maximizing -- use negfn and neggr</code></pre>
 <pre class="r"><code>end = Sys.time() 
 print(end - start) </code></pre>
-<pre><code>## Time difference of 1.178932 mins</code></pre>
+<pre><code>## Time difference of 1.183848 mins</code></pre>
 <pre class="r"><code>g &lt;- ggplot(estimates, aes(x = reorder(as.factor(Variable), -abs(Estimates)), y = Estimates)) + 
   geom_bar(stat = &quot;identity&quot;, color = &quot;black&quot;, position = position_dodge(), fill = &#39;#4472C4&#39;)+ 
   geom_errorbar(aes(ymin=Estimates-SE, ymax=Estimates+SE), width = .2,

@@ -63,7 +63,7 @@ data("tst_data")
 The original dataset had 49 total attributes, including attributes related to traffic, location, weather, points of interest, and time of day.  Pre-processing the data set was necessary to allow us to focus on the variables and observations of real relevance to our aim. Although we started out with 48 independent variables and one outcome variable, there were several reasons for removing most of the attributes, including:  
 
 1. The attribute had at least 60% missingness.
-    + Wind Chill (which is also a function of Temperature and Wind speed) and Precipitation (which also has low variability)
+    + Wind Chill (which is also redundant since it is a function of Temperature and Wind speed) and Precipitation (which also has low variability)
 2. The attribute had very low or no variability across the observations.  
     + after aggregating the County variable into urban and rural factor levels, it was apparent that about 95% of the accident data was derived from urban areas, therefore variables such as County, Zip-Code, and City were not of use 
     + most of the points of interest variables except Crossing and Traffic Signal
