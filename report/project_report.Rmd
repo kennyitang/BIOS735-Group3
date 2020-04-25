@@ -16,6 +16,7 @@ library(tidyverse)
 library(png)
 library(grid)
 library(kableExtra)
+library(ggplot2)
 ```
 
 # Introduction 
@@ -34,12 +35,12 @@ The aim of this project is to use Car Accident Data from North Carolina in 2016-
 
 # R-Package
 
-Our R package `group3project` contains the functions needed to fit a proportional odds model and random forest as well as the datasets we used to do so for this report. You can find this package on [GitHub](https://github.com/kennyitang/BIOS735-Group3/tree/master/group3project).
+Our R package `group3project` contains the functions needed to fit a proportional odds model and random forest as well as the datasets we used to do so for this report. You can find this package on [GitHub](https://github.com/kennyitang/BIOS735-Group3/tree/master/group3project). We provide more details on these functions in the later sections.
 
 *Note: edit this as needed as we fill in the R package
 
 * Functions for Proportional Odds Model
-    + pom.est: return the estimates of intercepts and slopes of a proportional odds model. It calls the following functions:
+    + pom.est: return the estimates and optionally the standard errors of the intercept and slope estimates of a proportional odds model. It calls the following functions:
     + loglik.pom: computes log likelihood of a proportional odds model, 
     + gradient.pom: computes the gradient of the log likelihood of a proportional odds model,
     + pom.logistic: evaluates a standard logistic function/anti-logit function, and
@@ -127,11 +128,11 @@ gbm::grid.arrange(img1, img2, ncol = 2)
 ```
 
 # Methods 
-We apply a proportional odds model with severity of an accident as the outcome, and predictors listed in the previous section as covariates. Based on paramter estimates of this model, we identify variables that are most associated with severity. In parallel, starting with the same set of variables, we use random forest to find the predictors and build a model that yields the best classification.  
+We apply a proportional odds model with severity of an accident as the outcome, and predictors listed in the previous section as covariates. We identify variables that are most associated with severity based on the magnitude of paramter estimates from this model. In parallel, starting with the same set of variables, we use random forest to find the predictors and build a model that yields the best classification.  
 
 
 ## Proportional Odds Model  
-For a single severity outcome $Y_i$ with covariates $X_i$, the usual proportional odds model suggests that 
+For a single severity outcome $Y_i \in \{1,2,3\}$ with covariates $x_i \in \mathbb{R}^p $, the usual proportional odds model suggests that 
 \[
   {\displaystyle
     \begin{aligned}
@@ -143,7 +144,7 @@ For a single severity outcome $Y_i$ with covariates $X_i$, the usual proportiona
 
 <br>
 
-Equivalently, if we define \(\phi(t) = \frac{1}{1+exp(-t)}\), then 
+Equivalently, if we define \(\phi(t) = \frac{1}{1+exp(-t)}\), then the model can be written as
 \[  
 {\displaystyle
     \begin{aligned}
@@ -162,7 +163,7 @@ l(\alpha, \beta)&= \sum_{i=1}^n\sum_{k=1}^3I(Y_i=k)log(P(Y_i=k))\\
                 &=\sum_{i=1}^n\{I(Y_i=1)log(\phi(\alpha1-x_i^T\beta))+ I(Y_i=2)log(\phi(\alpha2-x_i^T\beta)-\phi(\alpha1-x_i^T\beta))+  I(Y_i=3)log(1-\phi(\alpha2-x_i^T\beta))\}
     \end{aligned}
   }
-\].  
+\] (Woodridge,2002, p.656).  
 
 The gradient is 
 \[
@@ -214,9 +215,9 @@ The gradient is
   }
 \]   
 
-To fit the proportional odds model, we use the `optimx` function with BFGS as the method, and supply the likelihood and gradient functions given above. We also explored fitting a penalized proportional odds model to our data with an elastic net penalty by coordinate descent with the `ordinalNet` package.
+To fit the proportional odds model, we use the `optimx` function with BFGS as the method, and supply the likelihood and gradient functions given above. In our package, the proportional odds model estimation function takes user-defined formula and datasets and automatically span the model matrix for the subsequent computation of likelihood and gradient. Our function checks whether the input dependent variable is a valid ordered factor variable. It uses `optimx`'s second derivative optimality condition check to recommend users to scale continuous variables in order to obtain stable standard error estimates. In contrast to existing proportional odds model functions such as `MASS:polr()`, our function used arbitrary instead of `glm.fit` output as model starting values. While this increased computation time, we believe it may better avoid fitting at local optimum and increase robustness in the estimation.
 
-
+We also explored fitting a penalized proportional odds model to our data with an elastic net penalty by coordinate descent with the `ordinalNet` package.
 ### Variable Selection
 
   
@@ -247,11 +248,35 @@ Note that not all of the code is run in this markdown document due to compiling 
 
 ## Proportional Odds Model
 ```{r}
+trn_data$Severity_c = factor(trn_data$Severity, levels = c(1,2,3), 
+                             labels = c(1:length(unique(trn_data$Severity))), ordered = T)
+trn_data$temperature_sc = scale(trn_data$`Temperature(F)`)
+trn_data$humdity_sc = scale(trn_data$`Humidity(%)`)
+trn_data$pressure_sc = scale(trn_data$`Pressure(in)`)
+trn_data$windspeed_sc = scale(trn_data$`Wind_Speed(mph)`)
+trn_data$Visibility_sc = scale(trn_data$`Visibility(mi)`)
 
+start = Sys.time()
+estimates = pom.est(Severity_c ~ Source + Side + temperature_sc + humdity_sc + pressure_sc + 
+                     Visibility_sc + windspeed_sc + Crossing + Traffic_Signal +
+                     Sunrise_Sunset + weekday + interstate, data = trn_data, SE = T, details = F)
+end = Sys.time() 
+print(end - start) 
+
+g <- ggplot(estimates, aes(x = reorder(as.factor(Variable), -abs(Estimates)), y = Estimates)) + 
+  geom_bar(stat = "identity", color = "black", position = position_dodge(), fill = '#4472C4')+ 
+  geom_errorbar(aes(ymin=Estimates-SE, ymax=Estimates+SE), width = .2,
+                position = position_dodge(0.9)) + xlab("Predictors") + theme_bw()+
+  theme(text = element_text(size=18),axis.text.x = element_text(size = 16,angle = 45, hjust = 1, vjust = 1))+
+  scale_y_continuous(limits = c(-8,8)) + ggtitle("Proportional Odds Model Coefficient Estimates")
+plot(g)
 
 ```
 
+
+
 ```{r, echo = FALSE}
+#####We have this table of ordinal nets estimates but not any description above yet.
 # create table  
 down_df <- data.frame(Reference = c("1", "2", "3"), 
                        Predict1 = c(33959, 813, 543), 

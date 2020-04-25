@@ -2,7 +2,7 @@
 % Please edit documentation in R/pom_exp.R
 \name{pom.est}
 \alias{pom.est}
-\title{POM parameter estimation}
+\title{Proportional odds model parameter estimation}
 \usage{
 pom.est(pom.formula, data.input, SE = T, details = T)
 }

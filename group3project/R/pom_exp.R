@@ -74,16 +74,18 @@ pom.est = function(pom.formula, data.input, SE = T, details = T){
     optim.hess = attr(fit, "details")[,"nhatend"][[1]]
     optim.se = sqrt(diag(solve(-optim.hess)))
     
-    est.mat = data.frame(matrix(NA, nrow = length.param, ncol = 2))
-    colnames(est.mat) = c("Estimates", "SE")
+    est.mat = data.frame(matrix(NA, nrow = length.param, ncol = 3))
+    colnames(est.mat) = c("Variable","Estimates", "SE")
     rownames(est.mat) = c(paste0("Intercept", 1:length(init.a_vec)), colnames(X))
+    est.mat$Variable = rownames(est.mat)
     est.mat$Estimates = as.numeric(est)
     est.mat$SE = optim.se
   } else {
     
-    est.mat = data.frame(matrix(NA, nrow = length.param, ncol = 1))
-    colnames(est.mat) = c("Estimates")
+    est.mat = data.frame(matrix(NA, nrow = length.param, ncol = 2))
+    colnames(est.mat) = c("Variable","Estimates")
     rownames(est.mat) = c(paste0("Intercept", 1:length(init.a_vec)), colnames(X))
+    est.mat$Variable = rownames(est.mat)
     est.mat$Estimates = as.numeric(est)
     message("Standard error not computed. Set SE = T to recompute.")
   }

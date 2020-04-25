@@ -4,7 +4,7 @@
 \alias{recode.factor}
 \title{Create a design matrix without intercept}
 \usage{
-recode.factor(formula, data)
+\method{recode}{factor}(formula, data)
 }
 \arguments{
 \item{formula}{a formula object connected by "~", using the column names of the data matrix.}
@@ -22,7 +22,6 @@ as response-specific intercepts are supplied in the \code{loglik.pom} function.
 It uses the built-in \code{model.matrix} function so that logical and string variables are converted to indicator variables.
 }
 \examples{
-#'
 X2 = recode.factor(Severity_c ~ Source + Traffic_Signal + Sunrise_Sunset + weekday + interstate, data = tst_data)
 
 
