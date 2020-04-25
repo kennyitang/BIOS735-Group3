@@ -586,5 +586,5 @@ The Car Accidents data set for North Carolina and the derived training and test 
    
 [6] MapQuest documentation on traffic incident data: https://developer.mapquest.com/documentation/traffic-api/incidents/get/#response_field-severity
 
-[7] (Woodridge,2002, p.656). 
+[7] Wooldridge, Jeffrey. "M.(2002) Econometric Analysis of Cross Section and Panel Data." The MIT Press 0 5.1 (1995): 5.
 
