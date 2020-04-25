@@ -342,12 +342,12 @@ Below is a table of the confusion matrices of the proportional odds model and th
 ```{r, echo = FALSE}
 # create table  
 down_df <- data.frame(Reference = c("1", "2", "3"), 
-                       Predict.1 = c(33959, 813, 543), 
-                       Predict.2 = c(2753, 5207, 114), 
-                       Predict.3 = c(0,0,0), 
-                       Predict.1 = c(33906, 753, 540), 
-                       Predict.2 = c(2806, 5267, 117), 
-                       Predict.3 = c(0, 0, 0))
+                       "Predict1" = c(33959, 813, 543), 
+                       "Predict2" = c(2753, 5207, 114), 
+                       "Predict3" = c(0,0,0), 
+                       "Predict.1" = c(33906, 753, 540), 
+                       "Predict.2" = c(2806, 5267, 117), 
+                       "Predict.3" = c(0, 0, 0))
 knitr::kable(down_df, align = 'cccc', caption = "Proportional Odds and Ordinal Net Confusion Matrices", 
              booktabs=T) %>% 
   add_header_above(c("", "Proportional Odds" = 3, "Ordinal Net" = 3)) %>%
