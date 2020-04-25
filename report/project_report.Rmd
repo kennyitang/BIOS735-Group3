@@ -263,7 +263,7 @@ estimates = pom.est(Severity_c ~ Source + Side + temperature_sc + humdity_sc + p
 end = Sys.time() 
 print(end - start) 
 
-g <- ggplot(estimates, aes(x = reorder(as.factor(Variable), -abs(Estimates)), y = Estimates)) + 
+g <- ggplot(estimates[3:15,], aes(x = reorder(as.factor(Variable), -abs(Estimates)), y = Estimates)) + 
   geom_bar(stat = "identity", color = "black", position = position_dodge(), fill = '#4472C4')+ 
   geom_errorbar(aes(ymin=Estimates-SE, ymax=Estimates+SE), width = .2,
                 position = position_dodge(0.9)) + xlab("Predictors") + theme_bw()+
@@ -273,10 +273,15 @@ plot(g)
 
 ```
 
+The coefficient estimates can be interpreted as the magnitude and direction of the predictor's influence on the probabilities of observing an accident with a certain level of severity, *conditional on* when accidents happened. It is worth pointing out that, the direction of the effect of a predictor $\hat{\beta_j}$ is unambiguously determined by the sign of the coefficient only for $P(y=1 | \mathbf{x}_i)$ and $P(y=3 | \mathbf{x}_i)$, the probabilities of the smallest and the highest response category (Woodridge, 2002, p. 656). The effect of a predictor on $P(y=2 | \mathbf{x}_i)$ can go either direction.
+
+Specifically, our coefficient estimates suggest that, *given* that an accident happened, being on an interstate significantly increases the probability that this accident has a level-3 severity (on average from about 0.1% probability to roughly 10%), rather than a level-1 severity (from about 90% to a third of that). Having a traffic signal or pedestrian crossing nearby significantly decreases the probability that the accident has a level-3 severity (from about 0.1% to about half of that) while increasing the probability that the accident has a level-1 severity (by 5-10% on average).
+
+The parametric proportional odds model approach allows us to identify influential predictors, as well as the direction and magnitude of their effect. However, We noticed that our intercept estimates were about 3.34 and 6.46, suggesting an extreme shift in the nonlinear CDF that left little probabilities of predicting a highest level of car accident severity. This signals a limitation of the parametric proportional odds model in comparison to the random forest approach.
 
 
 ```{r, echo = FALSE}
-#####We have this table of ordinal nets estimates but not any description above yet.
+#####We have this table of ordinal net estimates but not any description above yet.
 # create table  
 down_df <- data.frame(Reference = c("1", "2", "3"), 
                        Predict1 = c(33959, 813, 543), 
@@ -290,6 +295,7 @@ knitr::kable(down_df, align = 'cccc', caption = "Proportional Odds and Ordinal N
   add_header_above(c("", "Proportional Odds" = 3, "Ordinal Net" = 3)) %>%
 kable_styling(latex_options = c("repeat_header", "scale_down"))
 ```
+
 
 ## Random Forest
 
