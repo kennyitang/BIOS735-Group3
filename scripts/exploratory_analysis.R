@@ -111,11 +111,17 @@ ggplot(trn.data, aes(x = Crossing, group = Severity.c)) +
   geom_text(aes(label = scales::percent(..prop..),
                 y = ..prop..), 
             stat = "count", 
-            vjust = -0.5, size = 3) +
+            vjust = -0.5, size = 5) +
   facet_grid(~Severity.c) +
   labs(y = "Percent") + 
-  scale_y_continuous(labels=scales::percent) +
-  theme_minimal()
+  scale_y_continuous(labels=scales::percent, limits=c(0, 1.1), breaks = seq(0, 1, 0.2)) +
+  theme_minimal() +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold"),
+        legend.position = "none",
+        strip.text.x = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5, size=15, face="bold"))+
+  ggtitle("Proportion of Crossing Nearby by Severity")
 
 
 # Indicator of presence of traffic signal in a nearby location.
@@ -125,11 +131,18 @@ ggplot(trn.data, aes(x = Traffic_Signal, group = Severity.c)) +
   geom_text(aes(label = scales::percent(..prop..),
                 y = ..prop..), 
             stat = "count", 
-            vjust = -0.5, size = 3) +
+            vjust = -0.5, size = 5) +
   facet_grid(~Severity.c) +
-  labs(y = "Percent") + 
-  scale_y_continuous(labels=scales::percent) +
-  theme_minimal()
+  labs(y = "Percent", x = "Traffic Signal", fill = "Severity") + 
+  scale_y_continuous(labels=scales::percent, limits=c(0, 1.1), breaks = seq(0, 1, 0.2)) +
+  theme_minimal() +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold"),
+        strip.text.x = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5, size=15, face="bold"),
+        legend.title = element_text(size = 13),
+        legend.text = element_text(size = 12))+
+  ggtitle("Proportion of Traffic Signal Nearby by Severity")
 
 
 #Sunrise_Sunset: Shows the period of day (i.e. day or night) based on sunrise/sunset.

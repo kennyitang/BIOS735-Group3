@@ -126,10 +126,10 @@ grid.raster(readPNG("weather_boxplots.png"))
 11. Crossing: TRUE/FALSE, presence of a crossing nearby for pedestrians, cyclists, etc. 
 12. Traffic_Signal: TRUE/FALSE, presence of a traffic signal nearby on an intersection 
 
-```{r,echo=FALSE}
-img1 <-  grid::rasterGrob(as.raster(readPNG("crossing.png")),
+```{r,fig.width=10, echo=FALSE}
+img1 <-  grid::rasterGrob(as.raster(readPNG("crossing2.png")),
                             interpolate = FALSE)
-img2 <-  grid::rasterGrob(as.raster(readPNG("Traffic_Signal.png")),
+img2 <-  grid::rasterGrob(as.raster(readPNG("traffic_signal2.png")),
                           interpolate = FALSE)
 gbm::grid.arrange(img1, img2, ncol = 2)
 ```
