@@ -1,80 +1,80 @@
 # load packages
-library(data.table)
-library(glmnetcr)
 library(ordinalNet)
+library(dplyr)
+library(caret)
+library(ggplot2)
+# load our package and datasets 
+devtools::load_all("../group3project")
+data("trn_data")
+data("tst_data")
 
-# training
-trn_data <-  fread("./Data/NC_Accidents_trn.csv")
-# testing
-tst_data <-  fread("./Data/NC_Accidents_tst.csv")
-# outcome and predictors 
-predictors <- c("Source", "Side", "Temperature(F)", "Humidity(%)", "Pressure(in)", 
-                "Visibility(mi)", "Wind_Speed(mph)", "Crossing", "Traffic_Signal",
-                "Sunrise_Sunset", "weekday", "interstate")
-trn_data$Severity_c <-  as.factor(trn_data$Severity)
+# code the outcome to be factors
+trn_data$Severity_c = as.factor(trn_data$Severity)
 tst_data$Severity_c = as.factor(tst_data$Severity)
 
-dim(trn_data)
-summary(trn_data$Severity_c)
+# scale continuous covariates
+trn_data2 <- trn_data %>% mutate_at(c("Temperature(F)",
+                                 "Humidity(%)",
+                                 "Pressure(in)",
+                                 "Wind_Speed(mph)",
+                                 "Visibility(mi)"), ~(scale(.) %>% as.vector))
 
-x <- trn_data[, predictors, with = F]
-y <- trn_data[, "Severity_c"]
+colnames(trn_data2)[3:7] =c("temperature_sc", "humdity_sc", "pressure_sc", "windspeed_sc", "Visibility_sc")
 
-# fit <- glmnetcr(x, y)
-# print(fit)
-# glmnetcr does not work since this is not a high-dimensional setting 
+# fit the full model with 12 predictors 
+formula = Severity_c ~ Source + Side + temperature_sc + humdity_sc + pressure_sc + 
+  Visibility_sc + windspeed_sc + Crossing + Traffic_Signal +
+  Sunrise_Sunset + weekday + interstate
 
+x = recode.factor(formula = formula, data = trn_data2)
+y = trn_data2[, "Severity_c"]
 
-# try ordinalNet 
-
-# convert categorical covariates to indicator variables 
-library(fastDummies)
-
-tokeep <- which(sapply(x, is.numeric))
-x_categorical <- x[ , -tokeep, with=FALSE]
-x_dummy <- dummy_cols(x, select_columns = colnames(x_categorical))
-
-newx <- (x_dummy[, -colnames(x_categorical), with = F])
-newy <- as.factor(trn_data$Severity_c)
-
-time.start <- Sys.time()
-fit1 <- ordinalNet(as.matrix(x_dummy[, -colnames(x_categorical), with = F]), newy, 
+set.seed(1)
+time.start = Sys.time()
+fit <- ordinalNet(as.matrix(x), y, 
                    family="cumulative", link="logit",
                    parallelTerms=TRUE, nonparallelTerms=FALSE)
-time.stop <- Sys.time()
+time.stop = Sys.time()
 time.stop - time.start
 
-summary(fit1)
-coef(fit1) 
-# Temperature, wind speed, source-mapquest-bing have zero effect size
+# predict with the test dataset 
+tst_data2 = tst_data %>% mutate_at(c("Temperature(F)",
+                                      "Humidity(%)",
+                                      "Pressure(in)",
+                                      "Wind_Speed(mph)",
+                                      "Visibility(mi)"), ~(scale(.) %>% as.vector))
 
-#coef(fit1, matrix=TRUE)
-#predict(fit1, type="response")
-#predict(fit1, type="class")
+colnames(tst_data2)[3:7] = c("temperature_sc", "humdity_sc", "pressure_sc", "windspeed_sc", "Visibility_sc")
 
-x_test <- tst_data[, predictors, with = F]
-tokeep <- which(sapply(x_test, is.numeric))
-x_test_categorical <- x_test[ , -tokeep, with=FALSE]
-x_test_dummy <- dummy_cols(x_test, select_columns = colnames(x_test_categorical))
+testx = recode.factor(formula = formula, data = tst_data2)
 
-newx_test <- (x_test_dummy[, -colnames(x_test_categorical), with = F])
+predicted = predict(fit, newx = as.matrix(testx), type="class")
 
-predicted <- predict(fit1, newx = as.matrix(newx_test), type="class")
-
-calc_acc = function(actual, predicted) {
-  mean(actual == predicted)
-}
-
+# accuracy
 calc_acc(actual = tst_data$Severity_c, predicted = predicted)
 
-# [1] 0.9032935
+# confusion matrix
+confusionMatrix(as.factor(predicted), tst_data$Severity_c)
 
 
+# plot coefficients from pom vs ordinalNet
+trn_data2$Severity_c = factor(trn_data2$Severity, levels = c(1,2,3), 
+                             labels = c(1:length(unique(trn_data$Severity))), ordered = T)
+pom = pom.est(formula, data = trn_data2, SE = T, details = F)
+coefs = data.frame(-coef(fit)[3:15])
+colnames(coefs) <- "ordinalNet"
+coefs$pom = pom$Estimates[3:15]
+coefs <- coefs[order(-abs(coefs$ordinalNet)),]
 
-# longitudinal? 
+df <- data.frame(model=rep(c("ordinalNet", "pom"), each=13),
+                 predictor=rep(row.names(coefs), 2),
+                 coef=c(coefs$ordinalNet, coefs$pom))
+df$coef <- round(df$coef, digits = 2)
 
-# summary stat analysis and visualization 
+ggplot(df, aes(x = reorder(predictor, -abs(coef)), y = coef, fill = model)) + 
+  geom_bar(stat = "identity", color = "black", position = position_dodge())+
+  xlab("Predictors") + theme_bw()+
+  theme(text = element_text(size=16),axis.text.x = element_text(size = 14,angle = 45, hjust = 1, vjust = 1))+
+  scale_y_continuous(limits = c(-5,5)) + scale_fill_manual(values=c('#ED7D31','#4472C4'))+
+  ggtitle("Prop. Odds Model Coefficient Estimates") 
 
-# backward selection function 
-
-# rf with ordinal data and variable selection 
