@@ -268,14 +268,6 @@ After using `stepAIC` to select the optimal model from our full model of 12 pred
 Using `stepAIC`, the optimal model was equivalent to the full model, with all of the 12 predictors kept in the model. This model will be used to build a model using the `group3project` R-package and to present our results of the proportional odds model. Note that here we are using the results from `polr` instead of making our own model compatible with `stepAIC`. But since the likelihoods are exactly the same and the difference in parameter estimates is in the magnitude of $10^{-4}$ or even smaller, we expect `stepAIC` will give us the same results if we input our model from `group3project`.
 
 ```{r, eval = FALSE}
-trn_data$Severity_c = factor(trn_data$Severity, levels = c(1,2,3), 
-                             labels = c(1:length(unique(trn_data$Severity))), ordered = T)
-trn_data$temperature_sc = scale(trn_data$`Temperature(F)`)
-trn_data$humdity_sc = scale(trn_data$`Humidity(%)`)
-trn_data$pressure_sc = scale(trn_data$`Pressure(in)`)
-trn_data$windspeed_sc = scale(trn_data$`Wind_Speed(mph)`)
-trn_data$Visibility_sc = scale(trn_data$`Visibility(mi)`)
-
 mod <- polr(Severity_c ~ Source + Side + temperature_sc + humdity_sc + pressure_sc + 
               Visibility_sc + windspeed_sc + Crossing + Traffic_Signal +
               Sunrise_Sunset + weekday + interstate, data = trn_data, Hess=TRUE) 
@@ -289,6 +281,14 @@ summary(step.model)
 The following code was used to build the model.
 
 ```{r}
+trn_data$Severity_c = factor(trn_data$Severity, levels = c(1,2,3), 
+                             labels = c(1:length(unique(trn_data$Severity))), ordered = T)
+trn_data$temperature_sc = scale(trn_data$`Temperature(F)`)
+trn_data$humdity_sc = scale(trn_data$`Humidity(%)`)
+trn_data$pressure_sc = scale(trn_data$`Pressure(in)`)
+trn_data$windspeed_sc = scale(trn_data$`Wind_Speed(mph)`)
+trn_data$Visibility_sc = scale(trn_data$`Visibility(mi)`)
+
 start = Sys.time()
 estimates = pom.est(Severity_c ~ Source + Side + temperature_sc + humdity_sc + pressure_sc + 
                      Visibility_sc + windspeed_sc + Crossing + Traffic_Signal +
