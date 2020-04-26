@@ -1,9 +1,6 @@
-#POM likelihood and gradient, reference Woodridge (2002, p656)
-
-#yi = 0, 1, ..., J (J+1 response categories)
-#a = a1, ..., aj (J cutoff parameters)
-
-# y needs to start at zero for this code to work
+#This scripts tests the functions for proportional odds model estimation
+#before adding them into the R package. It produces the confusion matrix and plots
+#estimates against those from MASS:polr()
 
 
 logistic = function(t){
@@ -213,12 +210,13 @@ categHat2 <- as.numeric(levels(y2)[max.col(pMat)])
 sum(categHat2 != y2) / length(y2) #0.09732882
 1- sum(categHat2 != y2) / length(y2) # failed to predict level 3 accidents. All 1 and 2 in the data.
 
-#Kappa
+#Kappa and confusion matrix
 library(caret)
 categHat2 = factor(categHat2, levels = c(1,2,3), labels = c(1,2,3), ordered = T)
 confusionMatrix(data=categHat2, reference=y2)
 
-###########
+
+###########compare with MASS:polr and plot######
 #fitting with polr
 set.seed(11)
 start = Sys.time()
