@@ -1,3 +1,5 @@
+# This script runs the penalized proportional odds model using the ordinalNet package
+
 # load packages
 library(ordinalNet)
 library(dplyr)
@@ -18,10 +20,10 @@ trn_data2 <- trn_data %>% mutate_at(c("Temperature(F)",
                                  "Pressure(in)",
                                  "Wind_Speed(mph)",
                                  "Visibility(mi)"), ~(scale(.) %>% as.vector))
-
+# rename the columns
 colnames(trn_data2)[3:7] =c("temperature_sc", "humdity_sc", "pressure_sc", "windspeed_sc", "Visibility_sc")
 
-# fit the full model with 12 predictors 
+# define the model and inputs 
 formula = Severity_c ~ Source + Side + temperature_sc + humdity_sc + pressure_sc + 
   Visibility_sc + windspeed_sc + Crossing + Traffic_Signal +
   Sunrise_Sunset + weekday + interstate
@@ -29,6 +31,7 @@ formula = Severity_c ~ Source + Side + temperature_sc + humdity_sc + pressure_sc
 x = recode.factor(formula = formula, data = trn_data2)
 y = trn_data2[, "Severity_c"]
 
+# set seed and fit the model 
 set.seed(1)
 time.start = Sys.time()
 fit <- ordinalNet(as.matrix(x), y, 
@@ -43,34 +46,32 @@ tst_data2 = tst_data %>% mutate_at(c("Temperature(F)",
                                       "Pressure(in)",
                                       "Wind_Speed(mph)",
                                       "Visibility(mi)"), ~(scale(.) %>% as.vector))
-
+# rename columns 
 colnames(tst_data2)[3:7] = c("temperature_sc", "humdity_sc", "pressure_sc", "windspeed_sc", "Visibility_sc")
-
+# recode the design matrix for the test dataset
 testx = recode.factor(formula = formula, data = tst_data2)
-
+# get class predictions 
 predicted = predict(fit, newx = as.matrix(testx), type="class")
-
 # accuracy
 calc_acc(actual = tst_data$Severity_c, predicted = predicted)
-
 # confusion matrix
 confusionMatrix(as.factor(predicted), tst_data$Severity_c)
-
 
 # plot coefficients from pom vs ordinalNet
 trn_data2$Severity_c = factor(trn_data2$Severity, levels = c(1,2,3), 
                              labels = c(1:length(unique(trn_data$Severity))), ordered = T)
+# get estimates from pom
 pom = pom.est(formula, data = trn_data2, SE = T, details = F)
 coefs = data.frame(-coef(fit)[3:15])
 colnames(coefs) <- "ordinalNet"
 coefs$pom = pom$Estimates[3:15]
 coefs <- coefs[order(-abs(coefs$ordinalNet)),]
-
+# create a data frame with coefficients from both models
 df <- data.frame(model=rep(c("ordinalNet", "pom"), each=13),
                  predictor=rep(row.names(coefs), 2),
                  coef=c(coefs$ordinalNet, coefs$pom))
 df$coef <- round(df$coef, digits = 2)
-
+# plot
 ggplot(df, aes(x = reorder(predictor, -abs(coef)), y = coef, fill = model)) + 
   geom_bar(stat = "identity", color = "black", position = position_dodge())+
   xlab("Predictors") + theme_bw()+
