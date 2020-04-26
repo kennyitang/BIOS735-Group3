@@ -263,15 +263,11 @@ Note that not all of the code is run in this markdown document due to compiling 
 
 After using `stepAIC` to select the optimal model from our full model of 12 predictors, we built the model using the functions from `group3project` and used the results to predict on our test set. Then, the model was compared to the penalized `ordinalNet`.
 
-### Variable Selection via stepAIC
+### Variable Selection via `stepAIC`
 
-Using `stepAIC`, the optimal model was equivalent to the full model, with all of the 12 predictors kept in the model. This model will be used to build a model using the `group3project` R-package and to present our results of the proportional odds model. 
+Using `stepAIC`, the optimal model was equivalent to the full model, with all of the 12 predictors kept in the model. This model will be used to build a model using the `group3project` R-package and to present our results of the proportional odds model. Note that here we are using the results from `polr` instead of making our own model compatible with `stepAIC`. But since the likelihoods are exactly the same and the difference in parameter estimates is in the magnitude of $10^{-4}$ or even smaller, we expect `stepAIC` will give us the same results if we input our model from `group3project`.
 
-### Proportional Odds via `group3project`
-
-The following code was used to build the model.
-
-```{r}
+```{r, eval = FALSE}
 trn_data$Severity_c = factor(trn_data$Severity, levels = c(1,2,3), 
                              labels = c(1:length(unique(trn_data$Severity))), ordered = T)
 trn_data$temperature_sc = scale(trn_data$`Temperature(F)`)
@@ -280,6 +276,19 @@ trn_data$pressure_sc = scale(trn_data$`Pressure(in)`)
 trn_data$windspeed_sc = scale(trn_data$`Wind_Speed(mph)`)
 trn_data$Visibility_sc = scale(trn_data$`Visibility(mi)`)
 
+mod <- polr(Severity_c ~ Source + Side + temperature_sc + humdity_sc + pressure_sc + 
+              Visibility_sc + windspeed_sc + Crossing + Traffic_Signal +
+              Sunrise_Sunset + weekday + interstate, data = trn_data, Hess=TRUE) 
+step.model <- stepAIC(mod, direction = "both", trace = F)
+summary(step.model)
+```
+
+
+### Proportional Odds via `group3project`
+
+The following code was used to build the model.
+
+```{r}
 start = Sys.time()
 estimates = pom.est(Severity_c ~ Source + Side + temperature_sc + humdity_sc + pressure_sc + 
                      Visibility_sc + windspeed_sc + Crossing + Traffic_Signal +
@@ -308,38 +317,39 @@ The parametric proportional odds model approach allows us to identify influentia
 The code below builds the penalized `ordinalNet` model.
 
 ```{r, eval = FALSE}
-trn_data <- trn_data %>% as.data.table()
-trn_data <- tst_data %>% as.data.table()
+# fit the full model with 12 predictors 
+formula = Severity_c ~ Source + Side + temperature_sc + humdity_sc + pressure_sc + 
+  Visibility_sc + windspeed_sc + Crossing + Traffic_Signal +
+  Sunrise_Sunset + weekday + interstate
 
-predictors <- c("Source", "Side", "Temperature(F)", "Humidity(%)", "Pressure(in)", "Visibility(mi)", "Wind_Speed(mph)", "Crossing", "Traffic_Signal", "Sunrise_Sunset", "weekday", "interstate")
-x <- trn_data[, predictors, with = F]
-y <- trn_data[, "Severity_c"]
+x = recode.factor(formula = formula, data = trn_data)
+y = trn_data[, "Severity_c"]
 
-tokeep <- which(sapply(x, is.numeric))
-x_categorical <- x[ , -tokeep, with=FALSE]
-x_dummy <- dummy_cols(x, select_columns = colnames(x_categorical))
-
-newx <- (x_dummy[, -colnames(x_categorical), with = F])
-newy <- as.factor(trn_data$Severity_c)
-
+set.seed(1)
 time.start <- Sys.time()
-fit1 <- ordinalNet(as.matrix(x_dummy[, -colnames(x_categorical), with = F]), newy, 
+fit <- ordinalNet(as.matrix(x), y, 
                    family="cumulative", link="logit",
                    parallelTerms=TRUE, nonparallelTerms=FALSE)
 time.stop <- Sys.time()
 time.stop - time.start
 
-x_test <- tst_data[, predictors, with = F]
-tokeep <- which(sapply(x_test, is.numeric))
-x_test_categorical <- x_test[ , -tokeep, with=FALSE]
-x_test_dummy <- dummy_cols(x_test, select_columns = colnames(x_test_categorical))
+# predict with the test dataset 
+tst_data2 <- tst_data %>% mutate_at(c("Temperature(F)",
+                                      "Humidity(%)",
+                                      "Pressure(in)",
+                                      "Wind_Speed(mph)",
+                                      "Visibility(mi)"), ~(scale(.) %>% as.vector))
 
-newx_test <- (x_test_dummy[, -colnames(x_test_categorical), with = F])
+colnames(tst_data2)[3:7] =c("temperature_sc", "humdity_sc", "pressure_sc", "windspeed_sc", "Visibility_sc")
 
-predicted <- predict(fit1, newx = as.matrix(newx_test), type="class")
+testx = recode.factor(formula = formula, data = tst_data2)
 
-calc_acc(actual = tst_data$Severity_c, predicted = predicted)
-confusionMatrix(as.factor(predicted), tst_data$Severity_c)
+predicted <- predict(fit, newx = as.matrix(testx), type="class")
+
+# accuracy
+calc_acc(actual = tst_data2$Severity_c, predicted = predicted)
+# confusion matrix
+confusionMatrix(as.factor(predicted), tst_data2$Severity_c)
 ```
 
 Below is a plot comparing the coefficient estimates from the proportional odds model and the penalized model. We can see that the parameter estimates from ordinalNet have smaller magnitude in most cases, which is what we expected, but overall still largely consistent. The coefficients of variables `Source_MapQuest-Bing`, `Temperature`, and `Wind speed` were shunk to zero. Notice that `Source_MapQuest-Bing` has a coefficient estimate around 0.3 in the proportional odds model, and the other two variables have very small effect sizes. Weather condition variables have small effect sizes in both model.
@@ -356,8 +366,8 @@ down_df <- data.frame(Reference = c("1", "2", "3"),
                        "Predict1" = c(33959, 813, 543), 
                        "Predict2" = c(2753, 5207, 114), 
                        "Predict3" = c(0,0,0), 
-                       "Predict.1" = c(33906, 753, 540), 
-                       "Predict.2" = c(2806, 5267, 117), 
+                       "Predict.1" = c(33951, 778, 551), 
+                       "Predict.2" = c(2761, 5242, 106), 
                        "Predict.3" = c(0, 0, 0))
 knitr::kable(down_df, align = 'cccc', caption = "Proportional Odds and Ordinal Net Confusion Matrices", 
              booktabs=T) %>% 
