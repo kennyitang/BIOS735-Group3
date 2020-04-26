@@ -18,7 +18,7 @@ library(grid)
 library(kableExtra)
 library(ggplot2)
 library(ordinalNet)
-library(fastDummies)
+library(dplyr)
 ```
 
 # Introduction 
@@ -494,13 +494,13 @@ kable_styling(latex_options = c("repeat_header", "scale_down"))
 The table below compares the 6 models built with all 12 predictors. We can see that the accuracy and Cohen's Kappa values are very comparable between the four models built with the entire Training Dataset. These metrics are slightly worse for the down sampled models. This is likely because of the immense loss of information when we apply a strict down sampling approach to our very imbalanced data. The most interesting result here is the difference in time to train between the models. 
 
 ```{r, echo = FALSE}
-# create table  
+# create table
 table_df <- data.frame(Method = c("Proportional Odds", "OrdinalNet", "Random Forest", "Ordinal Forest", "RF Down Sample", "OF Down Sample"), 
                        Training_Set_Size = c(rep(75887,4), rep(3243, 2)), 
                        Accuracy = c(0.903, .903, .904, .904, 0.887, 0.886), 
-                       Kappa = c(0.659, 0.664, 0.6696, 0.675, 0.661, 0.660), 
+                       Kappa = c(0.659, 0.662, 0.6696, 0.675, 0.661, 0.660), 
                        Time = c("1.7 minutes", "5.4  minutes", "11.5 minutes", "1.5 hours", "24 seconds", "7 minutes"))
-knitr::kable(table_df, align = 'ccccc', caption = "Model Performance", booktabs = TRUE) %>%
+knitr::kable(table_df, align = 'ccccc', caption = "Model Performance",  booktabs = TRUE) %>%
 kable_styling(latex_options = c("repeat_header", "scale_down"))
 ```
 
