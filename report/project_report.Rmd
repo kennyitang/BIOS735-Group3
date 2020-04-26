@@ -162,7 +162,7 @@ P(Y_i\leq k) = \frac{1}{1 + exp(x_i^T\beta-\alpha_k)} = \phi(\alpha_k-x_i^T\beta
 \]
 
 If we define $\alpha = (\alpha_1,\alpha_2)^T$, then log likelihood function for n accidents is therefore given by <sup>[7]</sup> 
-\[
+\[\small
   {\displaystyle
     \begin{aligned}
 l(\alpha, \beta)&= \sum_{i=1}^n\sum_{k=1}^3I(Y_i=k)log(P(Y_i=k))\\
@@ -186,7 +186,7 @@ The gradient is
 
 <br>
 
-\[
+\[\small
   {\displaystyle
     \begin{aligned}
         \frac{\partial l(\alpha, \beta)}{\partial \beta_j}
