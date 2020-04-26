@@ -2946,7 +2946,7 @@ P(Y_i\leq k) = \frac{1}{1 + exp(x_i^T\beta-\alpha_k)} = \phi(\alpha_k-x_i^T\beta
     \end{aligned}
   }  
 \]</span></p>
-<p>If we define <span class="math inline">\(\alpha = (\alpha_1,\alpha_2)^T\)</span>, then log likelihood function for n accidents is therefore given by <sup>[7]</sup> <span class="math display">\[
+<p>If we define <span class="math inline">\(\alpha = (\alpha_1,\alpha_2)^T\)</span>, then log likelihood function for n accidents is therefore given by <sup>[7]</sup> <span class="math display">\[\small
   {\displaystyle
     \begin{aligned}
 l(\alpha, \beta)&amp;= \sum_{i=1}^n\sum_{k=1}^3I(Y_i=k)log(P(Y_i=k))\\
@@ -2965,7 +2965,7 @@ l(\alpha, \beta)&amp;= \sum_{i=1}^n\sum_{k=1}^3I(Y_i=k)log(P(Y_i=k))\\
 \]</span></p>
 <p>, with the individual elements given below.</p>
 <p><br></p>
-<p><span class="math display">\[
+<p><span class="math display">\[\small
   {\displaystyle
     \begin{aligned}
         \frac{\partial l(\alpha, \beta)}{\partial \beta_j}
@@ -3051,7 +3051,7 @@ estimates = pom.est(Severity_c ~ Source + Side + temperature_sc + humdity_sc + p
 <pre><code>## Maximizing -- use negfn and neggr</code></pre>
 <pre class="r"><code>end = Sys.time() 
 print(end - start) </code></pre>
-<pre><code>## Time difference of 1.139051 mins</code></pre>
+<pre><code>## Time difference of 1.149414 mins</code></pre>
 <pre class="r"><code>g &lt;- ggplot(estimates[3:15,], aes(x = reorder(as.factor(Variable), -abs(Estimates)), y = Estimates)) + 
   geom_bar(stat = &quot;identity&quot;, color = &quot;black&quot;, position = position_dodge(), fill = &#39;#4472C4&#39;)+ 
   geom_errorbar(aes(ymin=Estimates-SE, ymax=Estimates+SE), width = .2,
