@@ -7,7 +7,7 @@ output:
     df_print: paged
     toc: yes
     toc_float: true
-    theme: journal
+    theme: readable
 ---
 
 ```{r setup, include=FALSE}
@@ -40,19 +40,19 @@ The aim of this project is to use Car Accident Data from North Carolina in 2016-
 Our R package `group3project` contains the functions needed to fit a proportional odds model and random forest as well as the datasets we used to do so for this report. You can find this package on [GitHub](https://github.com/kennyitang/BIOS735-Group3/tree/master/group3project). We provide more details on these functions in the later sections.
 
 * Functions for Proportional Odds Model
-    + pom.est: return the estimates and optionally the standard errors of the intercept and slope estimates of a proportional odds model. It calls the following functions:
-        - loglik.pom: computes log likelihood of a proportional odds model, 
-        - gradient.pom: computes the gradient of the log likelihood of a proportional odds model,
-        - pom.logistic: evaluates a standard logistic function/anti-logit function, and
-        - pom.recode: which prepares the design matrix for the proportional odds model.
+    + `pom.est`: return the estimates and optionally the standard errors of the intercept and slope estimates of a proportional odds model. It calls the following functions:
+        - `loglik.pom`: computes log likelihood of a proportional odds model, 
+        - `gradient.pom`: computes the gradient of the log likelihood of a proportional odds model,
+        - `pom.logistic`: evaluates a standard logistic function/anti-logit function, and
+        - `pom.recode`: which prepares the design matrix for the proportional odds model.
 
 * Functions for Random Forest
-    + calc_acc: calculates the accuracy of classification.
+    + `calc_acc`: calculates the accuracy of classification.
 
 * Datasets 
-    + Testing Data (tst_data)  
-    + Training Data (trn_data) 
-    + Full NC Data (nc_data)  
+    + `tst_data`: Testing Data
+    + `trn_data`: Training Data
+    + `nc_data`: Full NC Data
 
 ```{r, message = FALSE}
 ## load our package and datasets here
@@ -71,14 +71,14 @@ The original dataset had 49 total attributes, including attributes related to tr
 1. The attribute had at least 60% missingness.
     + Wind Chill (which is also redundant since it is a function of Temperature and Wind speed) and Precipitation (which also has low variability)
 2. The attribute had very low or no variability across the observations.  
-    + after aggregating the County variable into urban and rural factor levels, it was apparent that about 95% of the accident data was derived from urban areas, therefore variables such as County, Zip-Code, and City were not of use 
-    + most of the points of interest variables except Crossing and Traffic Signal
+    + After aggregating the County variable into urban and rural factor levels, it was apparent that about 95% of the accident data was derived from urban areas, therefore variables such as County, Zip-Code, and City were not of use 
+    + Most of the points of interest variables except Crossing and Traffic Signal
 3. The attribute was relevant for spatial purposes (i.e. latitude and longitude), which we do not aim to study at this time.  
   
   
 In terms of traffic incidents, rows missing all weather variables were removed. After pre-processing, the analysis dataset contains 119,279 traffic accidents from North Carolina between the years 2016 and 2019 with 12 attributes and one outcome variable. Additionally, the analysis data were split up into training data (pre-2019) and testing data (2019) as mentioned previously. The final training dataset has 75,887 observations and the testing has 43,392 observations.
 
-If you’re interested in looking at the code for the Data Processing and Exploratory Analysis, please see **data_prep.R** and **exploratory_analysis.R** in the scripts folder of our [GitHub repository](https://github.com/kennyitang/BIOS735-Group3/tree/master/scripts). 
+If you’re interested in looking at the code for the Data Processing and Exploratory Analysis, please see `data_prep.R` and `exploratory_analysis.R` in the *scripts* folder of our [GitHub repository](https://github.com/kennyitang/BIOS735-Group3/tree/master/scripts). 
   
 The variables selected for analysis, and some accompanying exploratory plots are as follows: 
 
@@ -259,7 +259,7 @@ And finally, for a more visual comparison, we can look at the **Confusion Matrix
 
 # Results 
 
-Note that not all of the code is run in this markdown document due to compiling time. If you’re interested in running the code for the random forest-based methods, please see **random_forest.R** in the scripts folder of our [GitHub repository](https://github.com/kennyitang/BIOS735-Group3/tree/master/scripts). 
+Note that not all of the code is run in this markdown document due to compiling time. If you’re interested in running the code for the random forest-based methods, please see `random_forest.R` in the *scripts* folder of our [GitHub repository](https://github.com/kennyitang/BIOS735-Group3/tree/master/scripts). 
 
 ## Proportional Odds Model
 ```{r}
