@@ -29,15 +29,15 @@ Not only is sitting traffic frustrating, but the resulting air pollution and lon
 
 Traffic accident data can therefore be an invaluable resource, as it can provide information that can potentially aid in predicting conditions where traffic accidents are prone to happen, so that steps can be taken to prevent the accident. Further, this data could also be useful in predicting how severely an accident will delay the drivers following the accident, so that steps can be taken to reduce this delay as needed. 
 
-Several computer scientists from the Ohio State University present exactly this: a dataset of traffic accidents from the contiguous United States, covering 2.95 million accidents with data collected between February 2016 and December 2019. As of March 2019, of the 49 states included, North Carolina had the fourth highest number of accidents in the dataset at 109,000. <sup>[3]</sup> Because of the wide range of attributes collected with each accident in the dataset, this dataset has the potential to provide the information needed to start making decisions about how to mitigate traffic accidents and the delays associated.
+Several computer scientists from the Ohio State University present exactly this: a dataset of traffic accidents from the contiguous United States, covering 2.95 million accidents with data collected between February 2016 and December 2019. As of March 2019, of the 49 states included, North Carolina had the fourth highest number of accidents in the dataset at 109,000. <sup>[3]</sup> Because of the wide range of attributes collected with each accident, this dataset has the potential to provide the information needed to start making decisions about how to mitigate traffic accidents and the delays associated.
 
 # Project Aim 
 
-The aim of this project is to use Car Accident Data from North Carolina in 2016-2018 to determine which factors have the most influence on the severity of car accidents in the state. We take two different approaches to construct models to predict the severity of car accidents, one through a proportional odds model and the other through machine learning. We then use the 2019 data to evaluate and compare the performance of our prediction models.
+The aim of this project is to use Car Accident Data from North Carolina in 2016-2018 to determine which factors have the most influence on the severity of car accidents in the state. We take two different approaches to construct models to predict the severity of car accidents, one through a proportional odds model and the other through machine learning Forest-based methods. We then use the 2019 data to evaluate and compare the performance of our prediction models.
 
 # R-Package
 
-Our R package `group3project` contains the functions needed to fit a proportional odds model and random forest as well as the datasets we used to do so for this report. You can find this package on [GitHub](https://github.com/kennyitang/BIOS735-Group3/tree/master/group3project). We provide more details on these functions in the later sections.
+Our R package `group3project` contains the functions we wrote needed to fit a proportional odds model as well as the datasets we used to do so for this report. You can find this package on [GitHub](https://github.com/kennyitang/BIOS735-Group3/tree/master/group3project). We provide more details on these functions in the later sections.
 
 * Functions for Proportional Odds Model
     + `pom.est`: return the estimates and optionally the standard errors of the intercept and slope estimates of a proportional odds model. It calls the following functions:
@@ -75,8 +75,7 @@ The original dataset had 49 total attributes, including attributes related to tr
     + Most of the points of interest variables except Crossing and Traffic Signal
 3. The attribute was relevant for spatial purposes (i.e. latitude and longitude), which we do not aim to study at this time.  
   
-  
-In terms of traffic incidents, rows missing all weather variables were removed. After pre-processing, the analysis dataset contains 119,279 traffic accidents from North Carolina between the years 2016 and 2019 with 12 attributes and one outcome variable. Additionally, the analysis data were split up into training data (pre-2019) and testing data (2019) as mentioned previously. The final training dataset has 75,887 observations and the testing has 43,392 observations.
+In terms of individual observations, rows missing all weather variables were removed. After pre-processing, the analysis dataset contains 119,279 traffic accidents from North Carolina between the years 2016 and 2019 with 12 attributes and one outcome variable. Additionally, the analysis data were split up into training data (pre-2019) and testing data (2019) as mentioned previously. The final training dataset has 75,887 observations and the testing has 43,392 observations.
 
 If you’re interested in looking at the code for the Data Processing and Exploratory Analysis, please see `data_prep.R` and `exploratory_analysis.R` in the *scripts* folder of our [GitHub repository](https://github.com/kennyitang/BIOS735-Group3/tree/master/scripts). 
   
@@ -135,8 +134,7 @@ gbm::grid.arrange(img1, img2, ncol = 2)
 ```
 
 # Methods 
-We apply a proportional odds model with severity of an accident as the outcome, and predictors listed in the previous section as covariates. We identify variables that are most associated with severity based on the magnitude of paramter estimates from this model. In parallel, starting with the same set of variables, we use random forest to find the predictors and build a model that yields the best classification.  
-
+We apply a proportional odds model and a penalized version with severity of an accident as the outcome, and predictors listed in the previous section as covariates. We identify variables that are most associated with severity using Step-AIC. In parallel, starting with the same set of variables, we use random forest and ordinal forest to find the most important predictors and build a model that yields the best predictive performance.  
 
 ## Proportional Odds Model  
 For a single severity outcome $Y_i \in \{1,2,3\}$ with covariates $x_i \in \mathbb{R}^p$, the usual proportional odds model suggests that 
@@ -227,7 +225,7 @@ To fit the proportional odds model, we use the `optimx` function with BFGS as th
 ### Variable Selection for the proportional odds model
 
 We used the `stepAIC` function in the `MASS` package to perform variable selection for the proportional odds model. We set the direction to be `both` in the `stepAIC` function, which means that we compared the AIC improvements from both dropping and adding each candidate covariate until we reach to the model with the smallest AIC. 
-The full model we started with is the model with 12 predictors that we manually selected , with no interactions. We ended up with all of the 12 predictors kept in the model, which will be used to present our results of the proportional odds model. 
+The full model we started with in the variable selection process is the model with 12 predictors that we manually selected in the Data section of the report, with no interactions or higher order polynomial functions of our predictors. 
 
 ### Penalized proportional odds model
 
@@ -237,7 +235,7 @@ where in our case we chose $c_j=1$ for all $j$ and $\alpha=1$, so this is equiva
 
   
 ## Random Forest
-We implement the random forest method directly from the `caret` package in R for a comparison to the proportional odds model.  We use 5-fold Cross Validation on the training data to build the model. Additionally, a tuning grid is used to tune the parameter `mtry`, which defines the number of variables randomly collected to be sampled at each split time. The tuning grid used explored `mtry` values $1$, $2$, and $3$. 
+We implement the random forest method directly from the `caret` package in R for a comparison to the proportional odds model. We chose this type of model since it is a classic machine learning analogue for generalized linear models. We use 5-fold Cross Validation on the training data to build the model. Additionally, a tuning grid is used to tune the parameter `mtry`, which defines the number of variables randomly collected to be sampled at each split time. The tuning grid used explored `mtry` values $1$, $2$, and $3$. 
 
 ### Ordinal Forest
 It should be noted however, that the typical random forest classifier does not account for the fact that the classes are ordinal (i.e. class 1 is "closer" to class 2 than class 3). Therefore, it is of interest to explore a machine learning algorithm that can account for this. The R package `ordinalForest` does just that. We use the model with default hyperparameters on our data and compare to the traditional random forest and the proportional odds model.
@@ -259,9 +257,20 @@ And finally, for a more visual comparison, we can look at the **Confusion Matrix
 
 # Results 
 
-Note that not all of the code is run in this markdown document due to compiling time. If you’re interested in running the code for the random forest-based methods, please see `random_forest.R` in the *scripts* folder of our [GitHub repository](https://github.com/kennyitang/BIOS735-Group3/tree/master/scripts). 
+Note that not all of the code is run in this markdown document due to compiling time. If you’re interested in running the code for `stepAIC`, `ordinalNet`, and the forest-based methods, please see `var.selection.R`, `penalized.R`, and `random_forest.R` respectively in the *scripts* folder of our [GitHub repository](https://github.com/kennyitang/BIOS735-Group3/tree/master/scripts). 
 
 ## Proportional Odds Model
+
+After using `stepAIC` to select the optimal model from our full model of 12 predictors, we built the model using the functions from `group3project` and used the results to predict on our test set. Then, the model was compared to the penalized `ordinalNet`.
+
+### Variable Selection via stepAIC
+
+Using `stepAIC`, the optimal model was equivalent to the full model, with all of the 12 predictors kept in the model. This model will be used to build a model using the `group3project` R-package and to present our results of the proportional odds model. 
+
+### Proportional Odds via `group3project`
+
+The following code was used to build the model.
+
 ```{r}
 trn_data$Severity_c = factor(trn_data$Severity, levels = c(1,2,3), 
                              labels = c(1:length(unique(trn_data$Severity))), ordered = T)
@@ -292,11 +301,11 @@ The coefficient estimates can be interpreted as the magnitude and direction of t
 
 Specifically, our coefficient estimates suggest that, *given* that an accident happened, being on an interstate significantly increases the probability that this accident has a level-3 severity (on average from about 0.1% probability to roughly 10%), rather than a level-1 severity (from about 90% to a third of that). Having a traffic signal or pedestrian crossing nearby significantly decreases the probability that the accident has a level-3 severity (from about 0.1% to about half of that) while increasing the probability that the accident has a level-1 severity (by 5-10% on average).
 
-The parametric proportional odds model approach allows us to identify influential predictors, as well as the direction and magnitude of their effect. However, We noticed that our intercept estimates were about 3.34 and 6.46, suggesting an extreme shift in the nonlinear CDF that left little probabilities of predicting a highest level of car accident severity. This signals a limitation of the parametric proportional odds model in comparison to the random forest approach.
-
-
+The parametric proportional odds model approach allows us to identify influential predictors, as well as the direction and magnitude of their effect. However, We noticed that our intercept estimates were about 3.34 and 6.46, suggesting an extreme shift in the nonlinear CDF that left little probabilities of predicting a highest level of car accident severity. This signals a limitation of the parametric proportional odds model in comparison to the random forest approach. The code used to predict this model's performance on the test dataset can be seen at the bottom of `pom_bfgs_pred.R` in the *scripts* folder of our [GitHub repository](https://github.com/kennyitang/BIOS735-Group3/tree/master/scripts). 
 
 ### Comparison with the penalized proportional odds model
+
+The code below builds the penalized `ordinalNet` model.
 
 ```{r, eval = FALSE}
 trn_data <- trn_data %>% as.data.table()
@@ -339,8 +348,7 @@ Below is a plot comparing the coefficient estimates from the proportional odds m
 grid.raster(readPNG("ordinal.png"))
 ```
 
-
-Below is a table of the confusion matrices of the proportional odds model and the penalized model. We can see that both methods did not predict an accident as severity level 3, which is due to the unbalanced number of severity levels in our training dataset. These two models produced similar overall prediction accuracy.   
+Below is a table of the confusion matrices of the proportional odds model and the penalized model. We can see that both methods did not predict an accident as severity level 3, which may be due in part to the unbalanced number of severity levels in our training dataset. The decision boundaries created by the models may have completely masked severity class 3, making it impossible to predict an observation with this severity correctly. Adding interaction terms or polynomial terms in our predictors may be of interest to try and avoid the masking. These two models produced similar overall prediction accuracy, which will be compared to the machine learning methods below.   
 
 ```{r, echo = FALSE}
 # create table  
@@ -487,9 +495,9 @@ kable_styling(latex_options = c("repeat_header", "scale_down"))
 ```
 
 ## Source Specific Modeling 
-Due to the results from the full dataset, it is clear that the Source Predictor is important in predicting the severity of car accidents on traffic delays in our dataset. It is not practical to use a prediction model with a variable such as API data source as an important predictor in the model. The different sources should ideally fit seamlessly together, but instead we have heterogeneity among the MapQuest and Bing derived data. Given more time, it might be of interest to reach out to these API sources to gather more information about their respective definitions of severity so we could try to create a more harmonious output. In the meantime, we build three new Random Forest models to investigate this issue further. 
+Due to the results from the full training dataset, it is clear that the Source Predictor is important in predicting the severity of car accidents on traffic delays. It is not practical to use a prediction model with a variable such as API data source as an important predictor. The different sources should ideally fit seamlessly together, but instead we have heterogeneity among the MapQuest and Bing derived data. Given more time, it might be of interest to reach out to these API sources to gather more information about their respective definitions of severity so we could try to create a more harmonious output variable. In the meantime, we build three new Random Forest models to investigate this issue further. 
 
-First, we build a model on the full training dataset, but removing Source from the set of predictors. 
+First, we build another model on the full training dataset, but this time removing Source from the set of predictors. 
 
 ```{r, eval = FALSE}
 #5-fold cross-validation
@@ -600,17 +608,17 @@ kable_styling(latex_options = c("repeat_header", "scale_down"))
 
 # Discussion 
 
-Although our accuracy values appear very high at first, we realize that API Source the data came from can greatly affect the results. This "batch effect" is undesirable when building a prediction model that should integrate these sources seamlessly. Aside from this issue, the most important variable in predicting car accident related traffic severity appears to be Interstate. In terms of our models, the Proportional Odds Model, Ordinal Net, Random Forest, and Ordinal Forest seem to perform similarly (in terms of accuracy) on our dataset with an outcome factor with 3 levels although the time to train varied widely. 
+Although our accuracy values appear very high at first, we realize that API Source the data came from can greatly affect the results. This "batch effect" is undesirable when building a prediction model that should integrate these sources seamlessly. Aside from this issue, the most important variable in predicting car accident related traffic severity appears to be Interstate. In terms of our models, the Proportional Odds Model, Ordinal Net, Random Forest, and Ordinal Forest seem to perform similarly (in terms of accuracy/Kappa) on our test dataset with an outcome factor with 3 levels, although the time to train varied widely. 
 
 It is also clear that summary statistics such as accuracy/Cohen's Kappa do not always tell the whole story. Although they had similar accuracies, the confusion matrices showed us that the likelihood-based models on the full training data had no predictions for severity class 3, whereas the forest-based machine learning models did. This could be because of the Random Forest's ability to account for more complicated interactions between the variables, whereas our proportional odds model had no interaction terms included. 
 
-We also discovered there is a "batch effect" in that the Source predictor is a very important variable in predicting severity class, although it would ideally have no effect on the outcome. It appears that the MapQuest data alone is more successful in predicting severity of other MapQuest based accidents.
+When looking into Source specific models, we also discovered that the MapQuest data alone is more successful in predicting severity of other MapQuest based accidents than Bing data or the combined data.
 
 A lot more data or different types of data may be needed to fully answer the questions this project aimed at answering, but this novel large scale and these types of analyses are a step in the right direction
 
 ## Limitations 
 
-As mentioned earlier, our outcome variable severity was defined very vaguely from the two API sources. It is not clear exactly how these classes are derived and whether the "distance" between class 1 and 2 is the same as between class 2 and 3, and across the two sources. This limitation contributes to our inability to truly understand the API Source effect on outcome.
+As mentioned earlier, our outcome variable severity was defined very vaguely from the two API sources. It is not clear exactly how these classes are derived and whether the "distance" between class 1 and 2 is the same as between class 2 and 3, within and across the two sources. This limitation contributes to our inability to truly understand the API Source effect on outcome.
 
 Another limitation is the imbalance of data we have in the training set, with most of the observations in severity class 1. Although we tried down-sampling, this resulted in an immense loss of information, using about 3,000 of our 75,000 training accidents. 
 
@@ -618,7 +626,7 @@ There is also lack of information about factors that we believe may be important
 
 ## Future Directions 
 
-We assumed that the proportional odds assumption holds and also assumed there were no longitudinal effects in our data. Testing both of these assumptions would be needed moving forward to ensure our methods are sound. Additionally, adding a penalty feature to our own proportional odds model functions would be a next step, to see how that could potentially improve the likelihood-based models, and potentially allows for evaluating interactions or more variables from other data sets.
+We assumed that the proportional odds assumption holds and also assumed there were no longitudinal effects in our data. Testing both of these assumptions would be needed moving forward to ensure our methods are sound. Additionally, adding a penalty feature to our own proportional odds model functions would be a next step, to see how that could potentially improve the likelihood-based models, and potentially allow for interactions or more variables from other data sets.
 
 It would also be of interest to aggregate our outcome further into two severity classes by combining classes 2 and 3 in order to compare models of this type to those we have already built. It would also be useful to try and account for the imbalanced data in other ways, potentially by using a weighted Random Forest, or even by borrowing data from other states in the minority classes.
 
