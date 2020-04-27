@@ -3062,7 +3062,7 @@ estimates = pom.est(Severity_c ~ Source + Side + temperature_sc + humdity_sc + p
 <pre><code>## Maximizing -- use negfn and neggr</code></pre>
 <pre class="r"><code>end = Sys.time() 
 print(end - start) </code></pre>
-<pre><code>## Time difference of 1.747188 mins</code></pre>
+<pre><code>## Time difference of 1.80802 mins</code></pre>
 <pre class="r"><code>g &lt;- ggplot(estimates[3:15,], aes(x = reorder(as.factor(Variable), -abs(Estimates)), y = Estimates)) + 
   geom_bar(stat = &quot;identity&quot;, color = &quot;black&quot;, position = position_dodge(), fill = '#4472C4')+ 
   geom_errorbar(aes(ymin=Estimates-SE, ymax=Estimates+SE), width = .2,
@@ -3544,7 +3544,7 @@ Model Performance
 Method
 </th>
 <th style="text-align:center;">
-Training.Set.Size
+Training Set Size
 </th>
 <th style="text-align:center;">
 Accuracy
@@ -3943,7 +3943,7 @@ Performance for Source Specific Random Forest Models
 Method
 </th>
 <th style="text-align:center;">
-Training.Set.Size
+Training Set Size
 </th>
 <th style="text-align:center;">
 Accuracy
