@@ -257,7 +257,7 @@ And finally, for a more visual comparison, we can look at the **Confusion Matrix
 
 # Results 
 
-Note that not all of the code is run in this markdown document due to compiling time. If you’re interested in running the code for `stepAIC`, `ordinalNet`, and the forest-based methods, please see `var.selection.R`, `penalized.R`, and `random_forest.R` respectively in the *scripts* folder of our [GitHub repository](https://github.com/kennyitang/BIOS735-Group3/tree/master/scripts). 
+Note that not all of the code is run in this markdown document due to compiling time. If you’re interested in running the code for `stepAIC`, `ordinalNet`, computing correlation, and the forest-based methods, please see `var.selection.R`, `penalized.R`, `corr.R`, and `random_forest.R` respectively in the *scripts* folder of our [GitHub repository](https://github.com/kennyitang/BIOS735-Group3/tree/master/scripts). 
 
 ## Proportional Odds Model
 
@@ -273,6 +273,19 @@ mod <- polr(Severity_c ~ Source + Side + temperature_sc + humdity_sc + pressure_
               Sunrise_Sunset + weekday + interstate, data = trn_data, Hess=TRUE) 
 step.model <- stepAIC(mod, direction = "both", trace = F)
 summary(step.model)
+```
+
+
+### Examine association between covariates
+
+Below are the plots showing the Pearson correlation between continuous covariates and Cramer's V for nominal covariates. Cramer's V is a measure of association between nomila variables, giving a value between 0 and 1, based on the Pearson's chi-squared statistic. From both plots, the largest magnitude of the measure of association is about 0.4, and the majority of covariate pairs have weak association. We also examined the boxplots of each pair of continuous and nominal covariates, and found no obvious association among them. Therefore, our model with only the main effects should be adequate and do not suffer too much from collinearity. 
+
+```{r fig.width=8,echo=FALSE}
+img1 <-  grid::rasterGrob(as.raster(readPNG("corr.png")),
+                            interpolate = FALSE)
+img2 <-  grid::rasterGrob(as.raster(readPNG("cramer.png")),
+                          interpolate = FALSE)
+gbm::grid.arrange(img1, img2, ncol = 2)
 ```
 
 
@@ -374,6 +387,8 @@ knitr::kable(down_df, align = 'cccc', caption = "Proportional Odds and Ordinal N
   add_header_above(c("", "Proportional Odds" = 3, "Ordinal Net" = 3)) %>%
 kable_styling(latex_options = c("repeat_header", "scale_down"))
 ```
+
+
 
 ## Random Forest
 
