@@ -96,7 +96,7 @@ It should be noted that the data set sources are rather vague on the definition 
 
 ### Predictors:
 
-1. Source: categorical, API that reported accident (MapQuest <sup>[6]</sup>, Bing <sup>[5]</sup>, MapQuest-Bing)  
+1. Source: categorical, API that reported accident (MapQuest <sup>[5]</sup>, Bing <sup>[6]</sup>, MapQuest-Bing)  
     + We would expect an intersection between the data from different sources
     + Both APIs have severity scales 1-4, but we don't know that they are harmonious
     + Including Source Predictor in our models to determine whether or not it is important in predicting our outcome 
@@ -220,7 +220,7 @@ The gradient is
   }
 \]   
 
-To fit the proportional odds model, we use the `optimx` function with BFGS as the method, and supply the likelihood and gradient functions given above. In our package, the proportional odds model estimation function takes user-defined formula and datasets and automatically span the model matrix for the subsequent computation of likelihood and gradient. Our function checks whether the input dependent variable is a valid ordered factor variable. It uses `optimx`'s second derivative optimality condition check to recommend users to scale continuous variables in order to obtain stable standard error estimates. In contrast to existing proportional odds model functions such as `MASS:polr()`, our function used arbitrary instead of `glm.fit` output as model starting values. While this increased computation time, we believe it may better avoid fitting at local optimum and increase robustness in the estimation.
+To fit the proportional odds model, we use the `optimx` function with BFGS as the method, and supply the likelihood and gradient functions given above. In our package, the proportional odds model estimation function takes user-defined formula and datasets and automatically span the model matrix for the subsequent computation of likelihood and gradient. Our function checks whether the input dependent variable is a valid ordered factor variable. It uses `optimx`'s second derivative optimality condition check to recommend users to scale continuous variables in order to obtain stable standard error estimates. In contrast to existing proportional odds model functions such as `MASS:polr()`, our function used arbitrary instead of `glm.fit` output as model starting values. While this might increase computation time, the concavity of the proportional odds model ensures the global maximum will be reached regardless of the starting value <sup>[8]</sup>.
 
 ### Variable Selection for the proportional odds model
 
@@ -673,10 +673,12 @@ The Car Accidents data set for North Carolina and the derived training and test 
       Teodorescu, and Rajiv Ramnath. "Accident Risk Prediction based on Heterogeneous
       Sparse Data: New Dataset and Insights." In proceedings of the 27th ACM SIGSPATIAL
       International Conference on Advances in Geographic Information Systems, ACM, 2019.
-      
-[5] Bing documentation on traffic incident data: https://docs.microsoft.com/en-us/bingmaps/rest-services/traffic/traffic-incident-data
-   
-[6] MapQuest documentation on traffic incident data: https://developer.mapquest.com/documentation/traffic-api/incidents/get/#response_field-severity
+
+[5] MapQuest documentation on traffic incident data: https://developer.mapquest.com/documentation/traffic-api/incidents/get/#response_field-severity
+
+[6] Bing documentation on traffic incident data: https://docs.microsoft.com/en-us/bingmaps/rest-services/traffic/traffic-incident-data
 
 [7] Wooldridge, Jeffrey. "M.(2002) Econometric Analysis of Cross Section and Panel Data." The MIT Press 0 5.1 (1995): 5.
+
+[8] Pratt, J. Concavity of the Log Likelihood. Journal of the American Statistical Association, 76(373), 103-106 (1981). doi:10.2307/2287052
 
