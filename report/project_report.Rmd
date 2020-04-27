@@ -40,19 +40,19 @@ The aim of this project is to use Car Accident Data from North Carolina in 2016-
 Our R package `group3project` contains the functions we wrote needed to fit a proportional odds model as well as the datasets we used to do so for this report. You can find this package on [GitHub](https://github.com/kennyitang/BIOS735-Group3/tree/master/group3project). We provide more details on these functions in the later sections.
 
 * Functions for Proportional Odds Model
-    + `pom.est`: return the estimates and optionally the standard errors of the intercept and slope estimates of a proportional odds model. It calls the following functions:
-        - `loglik.pom`: computes log likelihood of a proportional odds model, 
-        - `gradient.pom`: computes the gradient of the log likelihood of a proportional odds model,
-        - `pom.logistic`: evaluates a standard logistic function/anti-logit function, and
-        - `pom.recode`: which prepares the design matrix for the proportional odds model.
+    + `pom.est`: returns the estimates and optionally the standard errors of the intercept and slope estimates of a proportional odds model. It calls the following functions:
+        - `loglik.pom`: computes the log likelihood of a proportional odds model
+        - `gradient.pom`: computes the gradient of the log likelihood of a proportional odds model
+        - `pom.logistic`: evaluates a standard logistic function/anti-logit function
+        - `pom.recode`: prepares the design matrix for the proportional odds model
 
 * Functions for Random Forest
-    + `calc_acc`: calculates the accuracy of classification.
+    + `calc_acc`: calculates the accuracy of classification
 
 * Datasets 
-    + `tst_data`: Testing Data
-    + `trn_data`: Training Data
-    + `nc_data`: Full NC Data
+    + `tst_data`: testing data
+    + `trn_data`: training data
+    + `nc_data`: full NC data
 
 ```{r, message = FALSE}
 ## load our package and datasets here
@@ -84,11 +84,14 @@ The variables selected for analysis, and some accompanying exploratory plots are
 ### Outcome:
 1. Severity:  severity of the accident in terms of the impact on traffic, which is an integer from 1 to 3 with increasing impact. This is an ordinal variable and the outcome of interest.  
 
-Originally this variable had four categories (1-4), but only 24 observations had severity of 1, so we combined severities 1 and 2 and readjusted the scale. Even after this aggregation, our dataset is still very unbalanced. As seen in the code output below, severity class 1 has many more accidents in the training data than the more severe classes.
+Originally this variable had four categories (1-4), but only 24 observations had severity of 1 in the NC dataset, so we combined severities 1 and 2 and readjusted the scale. Even after this aggregation, our dataset is still very unbalanced. As seen in the code output below, severity class 1 has many more accidents in the training data than the more severe classes.
+
+```{r, echo = FALSE}
+tst_data$Severity_c = as.factor(tst_data$Severity)
+```
 
 ```{r}
 trn_data$Severity_c = as.factor(trn_data$Severity)
-tst_data$Severity_c = as.factor(tst_data$Severity)
 table(trn_data$Severity_c)
 ```
 
@@ -99,7 +102,7 @@ It should be noted that the data set sources are rather vague on the definition 
 1. Source: categorical, API that reported accident (MapQuest <sup>[5]</sup>, Bing <sup>[6]</sup>, MapQuest-Bing)  
     + We would expect an intersection between the data from different sources
     + Both APIs have severity scales 1-4, but we don't know that they are harmonious
-    + Including Source Predictor in our models to determine whether or not it is important in predicting our outcome 
+    + We can include Source in our models to determine whether or not it is important in predicting our outcome 
 
 **Location/Time** 
 
@@ -134,7 +137,7 @@ gbm::grid.arrange(img1, img2, ncol = 2)
 ```
 
 # Methods 
-We apply a proportional odds model and a penalized version with severity of an accident as the outcome, and predictors listed in the previous section as covariates. We identify variables that are most associated with severity using Step-AIC. In parallel, starting with the same set of variables, we use random forest and ordinal forest to find the most important predictors and build a model that yields the best predictive performance.  
+We apply a proportional odds model and a penalized version with severity of an accident as the outcome, and the predictors listed in the previous section as covariates. We identify variables that are most associated with severity using Step-AIC. In parallel, starting with the same set of variables, we use random forest and ordinal forest to find the most important predictors and build a model that yields the best predictive performance.  
 
 ## Proportional Odds Model  
 For a single severity outcome $Y_i \in \{1,2,3\}$ with covariates $x_i \in \mathbb{R}^p$, the usual proportional odds model suggests that 
@@ -220,11 +223,11 @@ The gradient is
   }
 \]   
 
-To fit the proportional odds model, we use the `optimx` function with BFGS as the method, and supply the likelihood and gradient functions given above. In our package, the proportional odds model estimation function takes user-defined formula and datasets and automatically span the model matrix for the subsequent computation of likelihood and gradient. Our function checks whether the input dependent variable is a valid ordered factor variable. It uses `optimx`'s second derivative optimality condition check to recommend users to scale continuous variables in order to obtain stable standard error estimates. In contrast to existing proportional odds model functions such as `MASS:polr()`, our function used arbitrary instead of `glm.fit` output as model starting values. While this might increase computation time, the concavity of the proportional odds model ensures the global maximum will be reached regardless of the starting value <sup>[8]</sup>.
+To fit the proportional odds model, we use the `optimx` function with BFGS as the method, and supply the likelihood and gradient functions given above. In our package, the proportional odds model estimation function takes user-defined formula and datasets and automatically spans the model matrix for the subsequent computation of likelihood and gradient. Our function checks whether the input dependent variable is a valid ordered factor variable. It uses `optimx`'s second derivative optimality condition check to recommend users to scale continuous variables in order to obtain stable standard error estimates. In contrast to existing proportional odds model functions such as `MASS::polr()`, our function used arbitrary values instead of `glm.fit` output as model starting values. While this might increase computation time, the concavity of the proportional odds model ensures the global maximum will be reached regardless of the starting value <sup>[8]</sup>.
 
 ### Variable Selection for the proportional odds model
 
-We used the `stepAIC` function in the `MASS` package to perform variable selection for the proportional odds model. We set the direction to be `both` in the `stepAIC` function, which means that we compared the AIC improvements from both dropping and adding each candidate covariate until we reach to the model with the smallest AIC. 
+We used the `stepAIC` function in the `MASS` package to perform variable selection for the proportional odds model. We set the direction to be `both` in the `stepAIC` function, which means that we compared the AIC improvements from both dropping and adding each candidate covariate until we reach the model with the smallest AIC. 
 The full model we started with in the variable selection process is the model with 12 predictors that we manually selected in the Data section of the report, with no interactions or higher order polynomial functions of our predictors. 
 
 ### Penalized proportional odds model
@@ -238,18 +241,18 @@ where in our case we chose $c_j=1$ for all $j$ and $\alpha=1$, so this is equiva
 We implement the random forest method directly from the `caret` package in R for a comparison to the proportional odds model. We chose this type of model since it is a classic machine learning analogue for generalized linear models. We use 5-fold Cross Validation on the training data to build the model. Additionally, a tuning grid is used to tune the parameter `mtry`, which defines the number of variables randomly collected to be sampled at each split time. The tuning grid used explored `mtry` values $1$, $2$, and $3$. 
 
 ### Ordinal Forest
-It should be noted however, that the typical random forest classifier does not account for the fact that the classes are ordinal (i.e. class 1 is "closer" to class 2 than class 3). Therefore, it is of interest to explore a machine learning algorithm that can account for this. The R package `ordinalForest` does just that. We use the model with default hyperparameters on our data and compare to the traditional random forest and the proportional odds model.
+It should be noted however, that the typical random forest classifier does not account for the fact that the classes are ordinal (i.e. class 1 is "closer" to class 2 than class 3). Therefore, it is of interest to explore a machine learning algorithm that can account for this. The R package `ordinalForest` does just that. We use the model with default hyperparameters on our data and compare it to the traditional random forest and the proportional odds model.
 
 ### Downsampling
-Since the levels of severity are not balanced, we also down-sampled the less severe outcomes to see if the predicted model improves in terms of accuracy and/or computation burden. Since the minority class, severity-3, has 1081 incidents in the training set, we randomly sampled 1081 incidents from severity-1 incidents and 1081 incidents from severity-2 incidents, so that the three levels are balanced. Random Forest and Ordinal Forest were applied to this data. 
+Since the levels of severity are not balanced, we also downsampled the less severe outcomes to see if the predicted model improves in terms of accuracy and/or computational burden. Since the minority class, severity-3, has 1081 incidents in the training set, we randomly sampled 1081 incidents from severity-1 incidents and 1081 incidents from severity-2 incidents, so that the three levels are balanced. Random Forest and Ordinal Forest were applied to this data. 
 
 ## Evaluation and Comparison of Models
 
 In order to compare the performance of the different models built, we use the attributes from the observations in our test set to predict their severity classification for each model. Then we quantitatively compare which observations were correctly classified.
 
-One way to do this is to measure the **accuracy** of the models on the test set. To do this, the fraction of the correctly classified observations is divided by the total number of observations in the test set. 
+One way to do this is to measure the **accuracy** of the models on the test set. To do this, the number of the correctly classified observations is divided by the total number of observations in the test set. 
 
-Another method to evaluate categorical models is to use **Cohen's Kappa**, which scales the accuracy to account for the predictions that are correct by guessing. We predict this will be more useful to us than the accuracy metric, since most of our data points come from Severity level 1 and accuracy could be very high simply by guessing all observations are in this class.
+Another method to evaluate categorical models is to use **Cohen's Kappa**, which scales the accuracy to account for the predictions that are correct by random chance. We predict this will be more useful to us than the accuracy metric, since most of our data points come from Severity level 1 and accuracy could be very high simply by guessing all observations are in this class.
 
 We also compare the computational time it takes to build each model, called the **time to train**. This is important when working with large datasets. 
 
@@ -319,11 +322,11 @@ plot(g)
 
 ```
 
-The coefficient estimates can be interpreted as the magnitude and direction of the predictor's influence on the probabilities of observing an accident with a certain level of severity, *conditional on* when accidents happened. It is worth pointing out that, the direction of the effect of a predictor $\hat{\beta_j}$ is unambiguously determined by the sign of the coefficient only for $P(y=1 | \mathbf{x}_i)$ and $P(y=3 | \mathbf{x}_i)$, the probabilities of the smallest and the highest response category<sup>[7]</sup>. The effect of a predictor on $P(y=2 | \mathbf{x}_i)$ can go either direction.
+The coefficient estimates can be interpreted as the magnitude and direction of the predictor's influence on the probabilities of observing an accident with a certain level of severity, *conditional on* the occurrence of the accident. It is worth pointing out that, the direction of the effect of a predictor $\hat{\beta_j}$ is unambiguously determined by the sign of the coefficient only for $P(y=1 | \mathbf{x}_i)$ and $P(y=3 | \mathbf{x}_i)$, the probabilities of the smallest and the highest response category<sup>[7]</sup>. The effect of a predictor on $P(y=2 | \mathbf{x}_i)$ can go either direction.
 
 Specifically, our coefficient estimates suggest that, *given* that an accident happened, being on an interstate significantly increases the probability that this accident has a level-3 severity (on average from about 0.1% probability to roughly 10%), rather than a level-1 severity (from about 90% to a third of that). Having a traffic signal or pedestrian crossing nearby significantly decreases the probability that the accident has a level-3 severity (from about 0.1% to about half of that) while increasing the probability that the accident has a level-1 severity (by 5-10% on average).
 
-The parametric proportional odds model approach allows us to identify influential predictors, as well as the direction and magnitude of their effect. However, We noticed that our intercept estimates were about 3.34 and 6.46, suggesting an extreme shift in the nonlinear CDF that left little probabilities of predicting a highest level of car accident severity. This signals a limitation of the parametric proportional odds model in comparison to the random forest approach. The code used to predict this model's performance on the test dataset can be seen at the bottom of `pom_bfgs_pred.R` in the *scripts* folder of our [GitHub repository](https://github.com/kennyitang/BIOS735-Group3/tree/master/scripts). 
+The parametric proportional odds model approach allows us to identify influential predictors, as well as the direction and magnitude of their effect. However, We noticed that our intercept estimates were about 3.34 and 6.46, suggesting an extreme shift in the nonlinear CDF that left little probabilities of predicting a highest level of car accident severity. This signals a limitation of the parametric proportional odds model in comparison to the random forest approach. The code used to evaluate this model's performance on the test dataset can be seen at the bottom of `pom_bfgs_pred.R` in the *scripts* folder of our [GitHub repository](https://github.com/kennyitang/BIOS735-Group3/tree/master/scripts). 
 
 ### Comparison with the penalized proportional odds model
 
@@ -371,7 +374,7 @@ Below is a plot comparing the coefficient estimates from the proportional odds m
 grid.raster(readPNG("ordinal.png"))
 ```
 
-Below is a table of the confusion matrices of the proportional odds model and the penalized model. We can see that both methods did not predict an accident as severity level 3, which may be due in part to the unbalanced number of severity levels in our training dataset. The decision boundaries created by the models may have completely masked severity class 3, making it impossible to predict an observation with this severity correctly. Adding interaction terms or polynomial terms in our predictors may be of interest to try and avoid the masking. These two models produced similar overall prediction accuracy, which will be compared to the machine learning methods below.   
+Below is a table of the confusion matrices of the proportional odds model and the penalized model. We can see that both methods did not predict any accidents as severity level 3, which may be due in part to the unbalanced number of severity levels in our training dataset. The decision boundaries created by the models may have completely masked severity class 3, making it impossible to predict an observation with this severity correctly. Adding interaction terms or polynomial terms in our predictors may be of interest to try and avoid the masking. These two models produced similar overall prediction accuracy, which will be compared to the machine learning methods below.   
 
 ```{r, echo = FALSE}
 # create table  
@@ -394,7 +397,7 @@ kable_styling(latex_options = c("repeat_header", "scale_down"))
 
 #### RF Full Training Data
 
-The code run to build the Random Forest on the training data with all predictors and test its predictive performance on the test set is given below.
+The code run to build the Random Forest on the training data with all 12 predictors and test its predictive performance on the test set is given below.
 
 ```{r, eval = FALSE}
 #5-fold cross-validation
@@ -425,7 +428,7 @@ varImpPlot(rf_mod_red$finalModel)
 confusionMatrix(predict(rf_mod_red, newdata = tst_data), tst_data$Severity_c)
 ```
 
-Below is a plot of variable importance for the random forest model. It is clear that the interstate predictor is the most important in predicting severity. The second most important is the sourceMapQuest variable, which is undesirable. We hoped that there would be no discrepancy between the severity scales of the different API Sources, but instead it appears that the Source is important in predicting severity, which is not a practical predictor to include in a model. Later, we will explore some Source-Specific models as potential remedies to overcome this so-called "batch-effect".
+Below is a plot of variable importance for the random forest model. It is clear that the interstate predictor is the most important in predicting severity. The second most important is the SourceMapQuest variable, which is undesirable. We hoped that there would be no discrepancy between the severity scales of the different API Sources, but instead it appears that the Source is important in predicting severity, which is not a practical predictor to include in a model. Later, we will explore some Source-Specific models as potential remedies to overcome this so-called "batch-effect".
 
 ```{r fig.width=6,echo=FALSE}
 grid.raster(readPNG("varimp_rf.png"))
@@ -433,7 +436,7 @@ grid.raster(readPNG("varimp_rf.png"))
 
 #### OF Full Training Data 
 
-The code run to build the Ordinal Forest on the training data with all predictors and test its predictive performance on the test set is given below.
+The code run to build the Ordinal Forest on the training data with all 12 predictors and test its predictive performance on the test set is given below.
 
 ```{r, eval = FALSE}
 #Prepare data
@@ -459,7 +462,7 @@ preds <- predict(ordforest, newdata = datatest)
 confusionMatrix(preds$ypred, datatest$Severity_c)
 ```
 
-Below are the confusion matrices for the Random Forest and Ordinal Forest predictions on the test set defined as the 2019 car accidents in North Carolina. While the matrices are similar, we see that the Ordinal Forest method correctly classifies more severity class 2 and 3 observations than Random Forest as seen along the diagonals of the matrices. Additionally and consequently, Ordinal Forest misclassifies less class 2 and 3 observations as class 1, as seen in the first column of each matrix.
+Below are the confusion matrices for the Random Forest and Ordinal Forest predictions on the test set defined as the 2019 car accidents in North Carolina. While the matrices are similar, we see that the Ordinal Forest method correctly classifies more severity class 2 and 3 observations than Random Forest as seen along the diagonals of the matrices. Additionally and consequently, Ordinal Forest misclassifies fewer class 2 and 3 observations as class 1, as seen in the first column of each matrix.
 
 ```{r, echo = FALSE}
 # create table  
@@ -487,7 +490,7 @@ downsample.trn <- trn_data[c(which(trn_data$Severity_c == 3),
                              sample(which(trn_data$Severity_c == 2), 1081)),]
 ```
 
-The same code that was used to train Random Forest and Ordinal Forest on the full training data was repeated on the Downsampled data. Below are the confusion matrices for the Random Forest and Ordinal Forest predictions on the test set when the models were built from the down sampled training set. We don't see a big difference between the two methods, but compared to the full training set, we see more predictions for severity class 3, both correct and incorrect classifications.
+The same code that was used to train Random Forest and Ordinal Forest on the full training data was repeated on the downsampled data. Below are the confusion matrices for the Random Forest and Ordinal Forest predictions on the test set when the models were built from the downsampled training set. We don't see a big difference between the two methods, but compared to the full training set, we see more predictions for severity class 3, both correct and incorrect classifications.
 
 ```{r, echo = FALSE}
 # create table  
@@ -498,7 +501,7 @@ down_df <- data.frame(Reference = c("1", "2", "3"),
                        Predict.1 = c(32456, 201, 11), 
                        Predict.2 = c(2911, 5426, 79), 
                        Predict.3 = c(1345, 393, 567))
-knitr::kable(down_df, align = 'cccc', caption = "Down Sampled Confusion Matrices", 
+knitr::kable(down_df, align = 'cccc', caption = "Downsampled Confusion Matrices", 
              booktabs=T) %>% 
   add_header_above(c("", "Random Forest" = 3, "Ordinal Forest" = 3)) %>%
 kable_styling(latex_options = c("repeat_header", "scale_down"))
@@ -506,12 +509,12 @@ kable_styling(latex_options = c("repeat_header", "scale_down"))
 
 ## Full Model Method Comparison 
 
-The table below compares the 6 models built with all 12 predictors. We can see that the accuracy and Cohen's Kappa values are very comparable between the four models built with the entire Training Dataset. These metrics are slightly worse for the down sampled models. This is likely because of the immense loss of information when we apply a strict down sampling approach to our very imbalanced data. The most interesting result here is the difference in time to train between the models. 
+The table below compares the 6 models built with all 12 predictors. We can see that the accuracy and Cohen's Kappa values are very comparable between the four models built with the entire Training Dataset. These metrics are slightly worse for the downsampled models. This is likely because of the immense loss of information when we apply a strict downsampling approach to our very imbalanced data. The most interesting result here is the difference in time to train between the models. 
 
 ```{r, echo = FALSE}
 # create table
-table_df <- data.frame(Method = c("Proportional Odds", "OrdinalNet", "Random Forest", "Ordinal Forest", "RF Down Sample", "OF Down Sample"), 
-                       Training_Set_Size = c(rep(75887,4), rep(3243, 2)), 
+table_df <- data.frame(Method = c("Proportional Odds", "OrdinalNet", "Random Forest", "Ordinal Forest", "RF Downsample", "OF Downsample"), 
+                       `Training Set Size` = c(rep(75887,4), rep(3243, 2)), 
                        Accuracy = c(0.903, .903, .904, .904, 0.887, 0.886), 
                        Kappa = c(0.659, 0.662, 0.6696, 0.675, 0.661, 0.660), 
                        Time = c("1.7 minutes", "5.4  minutes", "11.5 minutes", "1.5 hours", "24 seconds", "7 minutes"))
@@ -618,12 +621,12 @@ knitr::kable(down_df, align = 'cccc', caption = "Source Specific Confusion Matri
 kable_styling(latex_options = c("repeat_header", "scale_down"))
 ```
 
-The table below compares the 3 models built exploring the Source Predictor. We can see that removing the Source predictor for the full training data does not negatively impact the accuracy and Kappa values too much. For the MapQuest specific model, the accuracy and Kappa values are the highest seen of any of the models thus far. For the Bing specific model, it's exactly the opposite, the lowest seen so far.  
+The table below compares the 3 models built exploring the Source Predictor. We can see that removing the Source predictor for the full training data does not negatively impact the accuracy and Kappa values too much. For the MapQuest specific model, the accuracy and Kappa values are the highest seen of any of the models thus far. For the Bing specific model, it's exactly the opposite---the lowest seen so far.  
 
 ```{r, echo = FALSE}
 # create table  
 table_df <- data.frame(Method = c("Full Data No Source", "MapQuest Data", "Bing Data"), 
-                       Training_Set_Size = c(75887, 59538, 15518), 
+                       `Training Set Size` = c(75887, 59538, 15518), 
                        Accuracy = c(0.875, .924, .592), 
                        Kappa = c(0.510, 0.732, 0.0795), 
                        Time = c("12 minutes", "8  minutes", "2 minutes"))
@@ -633,7 +636,7 @@ kable_styling(latex_options = c("repeat_header", "scale_down"))
 
 # Discussion 
 
-Although our accuracy values appear very high at first, we realize that API Source the data came from can greatly affect the results. This "batch effect" is undesirable when building a prediction model that should integrate these sources seamlessly. Aside from this issue, the most important variable in predicting car accident related traffic severity appears to be Interstate. In terms of our models, the Proportional Odds Model, Ordinal Net, Random Forest, and Ordinal Forest seem to perform similarly (in terms of accuracy/Kappa) on our test dataset with an outcome factor with 3 levels, although the time to train varied widely. 
+Although our accuracy values appear very high at first, we realize that the API Source the data came from can greatly affect the results. This "batch effect" is undesirable when building a prediction model that should integrate these sources seamlessly. Aside from this issue, the most important variable in predicting car accident related traffic severity appears to be Interstate. In terms of our models, the Proportional Odds Model, Ordinal Net, Random Forest, and Ordinal Forest seem to perform similarly (in terms of accuracy/Kappa) on our test dataset with an outcome factor with 3 levels, although the time to train varied widely. 
 
 It is also clear that summary statistics such as accuracy/Cohen's Kappa do not always tell the whole story. Although they had similar accuracies, the confusion matrices showed us that the likelihood-based models on the full training data had no predictions for severity class 3, whereas the forest-based machine learning models did. This could be because of the Random Forest's ability to account for more complicated interactions between the variables, whereas our proportional odds model had no interaction terms included. 
 
@@ -645,9 +648,9 @@ A lot more data or different types of data may be needed to fully answer the que
 
 As mentioned earlier, our outcome variable severity was defined very vaguely from the two API sources. It is not clear exactly how these classes are derived and whether the "distance" between class 1 and 2 is the same as between class 2 and 3, within and across the two sources. This limitation contributes to our inability to truly understand the API Source effect on the outcome.
 
-Another limitation is the imbalance of data we have in the training set, with most of the observations in severity class 1. Although we tried down-sampling, this resulted in an immense loss of information, using about 3,000 of our 75,000 training accidents. 
+Another limitation is the imbalance of data we have in the training set, with most of the observations in severity class 1. Although we tried downsampling, this resulted in an immense loss of information, using about 3,000 of our 75,000 training accidents. 
 
-There is also lack of information about factors that we believe may be important such as speed limit and type of vehicle(s) involved in the accident. If these were included, we may be able to build a model that captures the full picture. 
+There is also a lack of information about factors that we believe may be important such as speed limit and type of vehicle(s) involved in the accident. If these were included, we may be able to build a model that better captures the full picture. 
 
 ## Future Directions 
 
@@ -658,7 +661,7 @@ It would also be of interest to aggregate our outcome further into two severity 
 In terms of the data, we would like to expand into more states and also incorporate local law enforcement data sets that contain information on the severity of car accidents in terms of injuries, fatalities, etc. One example source of this data is [Town of Cary Crash Data](https://data.world/townofcary/cpd-crash-incidents).
 
 # Data Source 
-The Car Accidents data set for North Carolina and the derived training and test data sets are provided in our project repository. Due to the size, we do not include the original nation-wide car accidents data set in our repository, but interested reader can find the dataset and related information on [Kaggle](https://www.kaggle.com/sobhanmoosavi/us-accidents) and the author's [Website](https://smoosavi.org/datasets/us_accidents).  
+The pre-processed Car Accidents data set for North Carolina and the derived training and test data sets are provided in our project repository. Due to the size, we do not include the original nation-wide car accidents data set in our repository, but interested reader can find the dataset and related information on [Kaggle](https://www.kaggle.com/sobhanmoosavi/us-accidents) and the author's [Website](https://smoosavi.org/datasets/us_accidents).  
   
   
 # References 
