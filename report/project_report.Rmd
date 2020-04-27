@@ -278,7 +278,7 @@ summary(step.model)
 
 ### Examine association between covariates
 
-Below are the plots showing the Pearson correlation between continuous covariates and Cramer's V for nominal covariates. Cramer's V is a measure of association between nomila variables, giving a value between 0 and 1, based on the Pearson's chi-squared statistic. From both plots, the largest magnitude of the measure of association is about 0.4, and the majority of covariate pairs have weak association. We also examined the boxplots of each pair of continuous and nominal covariates, and found no obvious association among them. Therefore, our model with only the main effects should be adequate and do not suffer too much from collinearity. 
+Below are the plots showing the Pearson correlation between continuous covariates and Cramer's V for nominal covariates. Cramer's V is a measure of association between nominal categorical variables, giving a value between 0 and 1, based on the Pearson's chi-squared statistic. From both plots, the largest magnitude of the measure of association is about 0.4, and the majority of covariate pairs have weak association. We also examined the boxplots of each pair of continuous and nominal covariates, and found no obvious association among them. Therefore, our model with only the main effects should be adequate and do not suffer too much from collinearity. 
 
 ```{r fig.width=8,echo=FALSE}
 img1 <-  grid::rasterGrob(as.raster(readPNG("corr.png")),
@@ -365,7 +365,7 @@ calc_acc(actual = tst_data2$Severity_c, predicted = predicted)
 confusionMatrix(as.factor(predicted), tst_data2$Severity_c)
 ```
 
-Below is a plot comparing the coefficient estimates from the proportional odds model and the penalized model. We can see that the parameter estimates from ordinalNet have smaller magnitude in most cases, which is what we expected, but overall still largely consistent. The coefficients of variables `Source_MapQuest-Bing`, `Temperature`, and `Wind speed` were shunk to zero. Notice that `Source_MapQuest-Bing` has a coefficient estimate around 0.3 in the proportional odds model, and the other two variables have very small effect sizes. Weather condition variables have small effect sizes in both model.
+Below is a plot comparing the coefficient estimates from the proportional odds model and the penalized model. We can see that the parameter estimates from ordinalNet have smaller magnitude in most cases, which is what we expected, but overall still largely consistent. The coefficients of variables `Source_MapQuest-Bing`, `Temperature`, and `Wind speed` were shrunk to zero. Notice that `Source_MapQuest-Bing` has a coefficient estimate around 0.3 in the proportional odds model, and the other two variables have very small effect sizes. Weather condition variables have small effect sizes in both model.
 
 ```{r fig.width=8,echo=FALSE}
 grid.raster(readPNG("ordinal.png"))
@@ -592,7 +592,7 @@ table(mq.trn$Severity_c)
 ```
 
 The same code that was used to train Random Forest on the full training data was repeated on the source specific data. Below are the plots of variable importance for the random forest models (Bing on the left and MapQuest on the right). It is clear that the 
-interstate predictor is still the most important in predicting severity for the MapQuest specific model only. For the Bing model, Source is of middle importance compared to the rest of the predictors, and Temperature is the most important. 
+predictor Interstate is still the most important in predicting severity for the MapQuest specific model only. For the Bing model, Interstate is of middle importance compared to the rest of the predictors, and Temperature is the most important. 
 
 ```{r, echo=FALSE}
 img1 <-  grid::rasterGrob(as.raster(readPNG("varimp_bing.png")),
@@ -639,11 +639,11 @@ It is also clear that summary statistics such as accuracy/Cohen's Kappa do not a
 
 When looking into Source specific models, we also discovered that the MapQuest data alone is more successful in predicting severity of other MapQuest based accidents than Bing data or the combined data.
 
-A lot more data or different types of data may be needed to fully answer the questions this project aimed at answering, but this novel large scale and these types of analyses are a step in the right direction
+A lot more data or different types of data may be needed to fully answer the questions this project aimed at answering, but this novel large scale and these types of analyses are a step in the right direction.
 
 ## Limitations 
 
-As mentioned earlier, our outcome variable severity was defined very vaguely from the two API sources. It is not clear exactly how these classes are derived and whether the "distance" between class 1 and 2 is the same as between class 2 and 3, within and across the two sources. This limitation contributes to our inability to truly understand the API Source effect on outcome.
+As mentioned earlier, our outcome variable severity was defined very vaguely from the two API sources. It is not clear exactly how these classes are derived and whether the "distance" between class 1 and 2 is the same as between class 2 and 3, within and across the two sources. This limitation contributes to our inability to truly understand the API Source effect on the outcome.
 
 Another limitation is the imbalance of data we have in the training set, with most of the observations in severity class 1. Although we tried down-sampling, this resulted in an immense loss of information, using about 3,000 of our 75,000 training accidents. 
 
@@ -653,7 +653,7 @@ There is also lack of information about factors that we believe may be important
 
 We assumed that the proportional odds assumption holds and also assumed there were no longitudinal effects in our data. Testing both of these assumptions would be needed moving forward to ensure our methods are sound. Additionally, adding a penalty feature to our own proportional odds model functions would be a next step, to see how that could potentially improve the likelihood-based models, and potentially allow for interactions or more variables from other data sets.
 
-It would also be of interest to aggregate our outcome further into two severity classes by combining classes 2 and 3 in order to compare models of this type to those we have already built. It would also be useful to try and account for the imbalanced data in other ways, potentially by using a weighted Random Forest, or even by borrowing data from other states in the minority classes.
+It would also be of interest to aggregate our outcome further into two severity classes by combining classes 2 and 3 assuming the "distance" between class 2 and 3 is close, in order to compare models of this type to those we have already built. It would also be useful to try and account for the imbalanced data in other ways, potentially by using a weighted Random Forest, or even by borrowing data from other states in the minority classes.
 
 In terms of the data, we would like to expand into more states and also incorporate local law enforcement data sets that contain information on the severity of car accidents in terms of injuries, fatalities, etc. One example source of this data is [Town of Cary Crash Data](https://data.world/townofcary/cpd-crash-incidents).
 
